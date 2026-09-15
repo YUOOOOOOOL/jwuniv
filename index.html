@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2027학년도 정왕고등학교 수시대박 🍉</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastelPurple: '#F3E8FF',
+                        pastelGreen: '#ECFDF5',
+                        pastelYellow: '#FEF9C3',
+                        pastelPink: '#FCE7F3',
+                        pastelOrange: '#FFEDD5',
+                        pastelBlue: '#E0F2FE'
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #f5f3ff 0%, #fbcfe8 50%, #fef3c7 100%);
+            min-height: 100vh;
+        }
+
+        .post-it {
+            position: relative;
+            transition: all 0.25s ease-in-out;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem;
+        }
+
+        .post-it:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .tape {
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 76px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+            border-radius: 4px;
+            z-index: 10;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 12px 32px rgba(180, 160, 220, 0.14);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .post-it-input {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 0.5rem;
+            padding: 5px 8px;
+            font-size: 0.813rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .post-it-input:focus {
+            outline: none;
+            background: #ffffff;
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.25);
+        }
+
+        /* 로딩 스피너 */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #ffffff;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-3 md:p-6 text-gray-800 flex flex-col min-h-screen font-sans">
+
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-purple-900/20 backdrop-blur-md">
+        <div class="glass-card w-full max-w-md p-7 md:p-8 rounded-3xl shadow-2xl relative overflow-hidden transition-all duration-300">
+            
+            <div class="text-center mb-6">
+                <div class="inline-block relative">
+                    <svg class="w-20 h-20 mx-auto drop-shadow-md animate-bounce" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 50C10 72.0914 27.9086 90 50 90C72.0914 90 90 72.0914 90 50H10Z" fill="#4ADE80" stroke="#16A34A" stroke-width="4"/>
+                        <path d="M16 50C16 68.7777 31.2223 84 50 84C68.7777 84 84 68.7777 84 50H16Z" fill="#FF6B6B"/>
+                        <circle cx="35" cy="62" r="2.5" fill="#262626"/>
+                        <circle cx="50" cy="70" r="2.5" fill="#262626"/>
+                        <circle cx="65" cy="62" r="2.5" fill="#262626"/>
+                        <circle cx="42" cy="56" r="2.5" fill="#262626"/>
+                        <circle cx="58" cy="56" r="2.5" fill="#262626"/>
+                        <circle cx="38" cy="67" r="1.5" fill="white"/>
+                        <circle cx="62" cy="67" r="1.5" fill="white"/>
+                        <ellipse cx="30" cy="65" rx="3" ry="2" fill="#FF9E9E" opacity="0.8"/>
+                        <ellipse cx="70" cy="65" rx="3" ry="2" fill="#FF9E9E" opacity="0.8"/>
+                    </svg>
+                    <span class="absolute -top-1 -right-4 bg-pink-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full shadow">합격기원! 🍀</span>
+                </div>
+
+                <h1 class="text-2xl font-extrabold text-purple-950 mt-2 tracking-tight">
+                    2027학년도 정왕고등학교 수시대박 🍉
+                </h1>
+                <p class="text-xs text-purple-700 mt-1 font-medium">나만의 12가지 수시 지원 카드를 기재하고 관리해보세요</p>
+            </div>
+
+            <div class="flex bg-purple-100/70 p-1 rounded-xl mb-5 border border-purple-200">
+                <button id="tab-login-btn" onclick="switchAuthTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-purple-900 shadow-sm">
+                    <i class="fa-solid fa-right-to-bracket mr-1"></i> 로그인
+                </button>
+                <button id="tab-signup-btn" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-purple-700 hover:text-purple-950">
+                    <i class="fa-solid fa-user-plus mr-1"></i> 회원가입
+                </button>
+            </div>
+
+            <!-- 로그인 폼 -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold text-purple-900 mb-1">학번 (예: 30901)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-id-card absolute left-3 top-3 text-purple-400 text-sm"></i>
+                        <input type="text" id="login-id" required placeholder="학번 5자리를 입력하세요" class="w-full pl-9 pr-3 py-2.5 bg-white/90 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-purple-900 mb-1">비밀번호</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-3 text-purple-400 text-sm"></i>
+                        <input type="password" id="login-pw" required placeholder="비밀번호를 입력하세요" class="w-full pl-9 pr-3 py-2.5 bg-white/90 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400">
+                    </div>
+                </div>
+                <button type="submit" id="login-submit-btn" class="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-bold rounded-xl shadow-md transition-all text-sm mt-2 flex items-center justify-center gap-2">
+                    <span>수시 노트 열기</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <!-- 회원가입 폼 -->
+            <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-3 hidden">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-900 mb-1">학번</label>
+                        <input type="text" id="signup-id" required placeholder="예: 30901" class="w-full px-3 py-2 bg-white/90 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-purple-900 mb-1">이름</label>
+                        <input type="text" id="signup-name" required placeholder="예: 홍길동" class="w-full px-3 py-2 bg-white/90 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-purple-900 mb-1">비밀번호</label>
+                    <input type="password" id="signup-pw" required placeholder="비밀번호 입력" class="w-full px-3 py-2 bg-white/90 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-purple-900 mb-1">비밀번호 확인</label>
+                    <input type="password" id="signup-pw-confirm" required placeholder="비밀번호 재입력" class="w-full px-3 py-2 bg-white/90 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400">
+                </div>
+                <button type="submit" id="signup-submit-btn" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl shadow-md transition-all text-sm mt-2 flex items-center justify-center gap-2">
+                    <span>회원가입 완료 🍉</span>
+                </button>
+            </form>
+            
+            <p id="auth-msg" class="text-xs text-center mt-3 font-semibold text-pink-600 min-h-[1rem]"></p>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden flex-col max-w-7xl mx-auto w-full flex-grow pb-24">
+        
+        <header class="glass-card rounded-2xl p-4 md:p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 border border-white/80">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-2xl shadow-sm font-bold">
+                    🍉
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold text-purple-950 tracking-tight">2027학년도 정왕고등학교 수시대박 🍉</h1>
+                    <p class="text-xs md:text-sm text-purple-700 mt-0.5">
+                        <span id="user-display-info" class="font-bold text-pink-600">30901 홍길동</span> 학생의 12개 수시 지원 카드 현황
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+                <button onclick="openCalendarModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs md:text-sm font-bold rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-days text-yellow-300"></i>
+                    <span>학급 수시 달력</span>
+                </button>
+                <button id="save-cards-btn" onclick="saveAllCards()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-bold rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>저장하기</span>
+                </button>
+                <button onclick="handleLogout()" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs md:text-sm font-semibold rounded-xl transition">
+                    로그아웃
+                </button>
+            </div>
+        </header>
+
+        <!-- 4년제 대학 섹션 -->
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-base md:text-lg font-bold text-purple-950 flex items-center gap-2">
+                <i class="fa-solid fa-note-sticky text-purple-600"></i>
+                4년제 대학 수시 지원 카드 (6장)
+            </h2>
+            <span class="text-xs bg-purple-200/70 text-purple-900 px-3 py-1 rounded-full font-bold">1번 ~ 6번 카드</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+            <div id="cards-container-4yr" class="contents"></div>
+        </div>
+
+        <!-- 전문대 섹션 -->
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-base md:text-lg font-bold text-teal-950 flex items-center gap-2">
+                <i class="fa-solid fa-graduation-cap text-teal-600"></i>
+                전문대학 수시 지원 카드 (최대 6장)
+            </h2>
+            <span class="text-xs bg-teal-200/70 text-teal-900 px-3 py-1 rounded-full font-bold">7번 ~ 12번 카드</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div id="cards-container-2yr" class="contents"></div>
+        </div>
+    </div>
+
+    <!-- 하단 학급 달력 배너 -->
+    <div id="bottom-banner" class="fixed bottom-0 left-0 right-0 z-30 p-3 bg-white/90 backdrop-blur-md border-t border-purple-200 shadow-lg hidden">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-2">
+            <div class="flex items-center gap-2 text-xs md:text-sm text-purple-950 font-semibold">
+                <span class="text-xl">🍉</span>
+                <span class="hidden sm:inline">우리 반 친구들의 면접·실기, 서류제출, 합격발표 일정을 통합 달력으로 확인하세요!</span>
+                <span class="sm:hidden">학급 수시 일정 한눈에 보기</span>
+            </div>
+            <button onclick="openCalendarModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs md:text-sm rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-calendar-check text-yellow-300"></i>
+                <span>학급 수시 달력 열기</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="calendar-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/40 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-5xl h-[90vh] rounded-3xl p-5 md:p-7 flex flex-col relative overflow-hidden bg-white/95">
+            
+            <div class="flex items-center justify-between pb-3.5 border-b border-purple-100">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">📅</span>
+                    <div>
+                        <h2 class="text-lg md:text-xl font-bold text-purple-950">정왕고등학교 수시 일정 통합 달력</h2>
+                        <p class="text-xs text-gray-500 font-medium">학급 전체 학생들의 면접/실기, 서류제출, 합격발표 일정 모아보기</p>
+                    </div>
+                </div>
+                <button onclick="closeCalendarModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 관리자 인증 뷰 -->
+            <div id="calendar-auth-view" class="flex-grow flex flex-col items-center justify-center p-6 text-center">
+                <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-2xl mb-4">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h3 class="text-lg font-bold text-purple-950 mb-1">선생님 / 학급 관리자 인증</h3>
+                <p id="admin-pass-hint" class="text-xs text-gray-500 mb-4 max-w-xs">학급 전체 일정을 조회하기 위해 비밀번호를 입력해 주세요.<br>(기본 암호: <span class="font-mono font-bold text-purple-700">1234</span>)</p>
+                <div class="flex gap-2 w-full max-w-xs">
+                    <input type="password" id="admin-pass-input" placeholder="비밀번호 입력" class="flex-1 px-4 py-2 bg-gray-50 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
+                    <button onclick="verifyAdminPass()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl">
+                        확인
+                    </button>
+                </div>
+
+                <button onclick="toggleChangePassView()" class="text-xs text-purple-600 hover:underline font-semibold mt-3 flex items-center gap-1 mx-auto">
+                    <i class="fa-solid fa-key"></i> 비밀번호 변경하기
+                </button>
+                
+                <div id="change-pass-box" class="hidden w-full max-w-xs mt-3 p-3.5 bg-purple-50/80 rounded-2xl border border-purple-200 text-left space-y-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-purple-900 mb-1">현재 비밀번호</label>
+                        <input type="password" id="cur-pass-input" placeholder="현재 비밀번호" class="w-full px-3 py-1.5 text-xs bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-400">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-purple-900 mb-1">새 비밀번호</label>
+                        <input type="password" id="new-pass-input" placeholder="새 비밀번호 입력" class="w-full px-3 py-1.5 text-xs bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-400">
+                    </div>
+                    <button onclick="handleUpdateAdminPass()" class="w-full py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition shadow-sm">
+                        비밀번호 저장
+                    </button>
+                </div>
+
+                <p id="admin-auth-msg" class="text-xs text-red-500 mt-2 font-semibold min-h-[1rem]"></p>
+            </div>
+
+            <!-- 달력 본문 뷰 -->
+            <div id="calendar-content-view" class="flex-grow flex flex-col overflow-hidden hidden pt-4">
+                
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-purple-900">🏫 반 선택:</span>
+                            <select id="calendar-class-filter" onchange="renderCalendar()" class="bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1 text-xs font-bold text-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                <option value="ALL">전체 반 보기</option>
+                                <option value="301">3-1반 (301)</option>
+                                <option value="302">3-2반 (302)</option>
+                                <option value="303">3-3반 (303)</option>
+                                <option value="304">3-4반 (304)</option>
+                                <option value="305">3-5반 (305)</option>
+                                <option value="306">3-6반 (306)</option>
+                                <option value="307">3-7반 (307)</option>
+                                <option value="308">3-8반 (308)</option>
+                                <option value="309">3-9반 (309)</option>
+                                <option value="310">3-10반 (310)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-purple-900">📅 월 선택:</span>
+                            <select id="calendar-month-select" onchange="renderCalendar()" class="bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1 text-xs font-bold text-purple-900 focus:outline-none">
+                                <option value="9">2026년 9월</option>
+                                <option value="10" selected>2026년 10월</option>
+                                <option value="11">2026년 11월</option>
+                                <option value="12">2026년 12월</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-purple-900">📌 구분:</span>
+                            <select id="calendar-type-filter" onchange="renderCalendar()" class="bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1 text-xs font-bold text-purple-900 focus:outline-none">
+                                <option value="ALL">전체 일정 보기</option>
+                                <option value="INTERVIEW">🗣️ 면접/실기</option>
+                                <option value="DOC">📄 서류제출</option>
+                                <option value="PASS">🎉 합격발표</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-xs text-purple-900 bg-purple-100/80 px-3 py-1 rounded-lg font-bold">
+                        등록된 일정: <span id="total-events-count" class="font-extrabold text-pink-600">0</span>건
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow overflow-hidden">
+                    <div class="lg:col-span-2 bg-purple-50/50 rounded-2xl p-3 border border-purple-100 flex flex-col overflow-y-auto">
+                        <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-purple-900 mb-2 py-1 bg-purple-100/70 rounded-lg">
+                            <span class="text-red-500">일</span>
+                            <span>월</span>
+                            <span>화</span>
+                            <span>수</span>
+                            <span>목</span>
+                            <span>금</span>
+                            <span class="text-blue-500">토</span>
+                        </div>
+                        <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 flex-grow auto-rows-fr min-h-[320px]"></div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-3 border border-purple-100 flex flex-col overflow-hidden">
+                        <h4 class="text-xs font-bold text-purple-950 mb-2 pb-1.5 border-b border-gray-100 flex items-center justify-between">
+                            <span>📋 학급 수시 일정 상세 리스트</span>
+                            <i class="fa-solid fa-list-check text-purple-400"></i>
+                        </h4>
+                        <div id="calendar-events-list" class="space-y-2 overflow-y-auto flex-grow pr-1"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // -------------------------------------------------------------
+        // ★ 3단계에서 복사한 구글 앱스 스크립트 웹 앱 URL을 아래에 붙여넣으세요! ★
+        // -------------------------------------------------------------
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxcDbi1FWv5dHXykqhWBqQqEyMKO4waDccb7fuGQ69ZLigYw2PAkqEKKOOBh3oVD_TPA/exec"
+
+        const POSTIT_COLORS = [
+            { bg: 'bg-amber-50/90', border: 'border-amber-200', text: 'text-amber-900', badge: 'bg-amber-200/70 text-amber-900' },
+            { bg: 'bg-rose-50/90', border: 'border-rose-200', text: 'text-rose-900', badge: 'bg-rose-200/70 text-rose-900' },
+            { bg: 'bg-purple-50/90', border: 'border-purple-200', text: 'text-purple-900', badge: 'bg-purple-200/70 text-purple-900' },
+            { bg: 'bg-emerald-50/90', border: 'border-emerald-200', text: 'text-emerald-900', badge: 'bg-emerald-200/70 text-emerald-900' },
+            { bg: 'bg-sky-50/90', border: 'border-sky-200', text: 'text-sky-900', badge: 'bg-sky-200/70 text-sky-900' },
+            { bg: 'bg-orange-50/90', border: 'border-orange-200', text: 'text-orange-900', badge: 'bg-orange-200/70 text-orange-900' }
+        ];
+
+        let currentUser = null;
+        let usersData = JSON.parse(localStorage.getItem('susi_app_users')) || {};
+        let cardsData = []; 
+        let globalAllData = null; // 달력용 구글 시트 전체 데이터 저장용
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = sessionStorage.getItem('susi_current_user');
+            if (savedUser) {
+                currentUser = savedUser;
+                showMainApp();
+            }
+        });
+
+        // 구글 시트 API 공통 요청 함수
+        async function callGoogleAPI(data) {
+            if (!GOOGLE_SCRIPT_URL) return null; // URL이 없으면 로컬 동작
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(data)
+                });
+                return await res.json();
+            } catch (err) {
+                console.error("API Error:", err);
+                return null;
+            }
+        }
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const loginBtn = document.getElementById('tab-login-btn');
+            const signupBtn = document.getElementById('tab-signup-btn');
+            const msg = document.getElementById('auth-msg');
+            msg.innerText = '';
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                loginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-purple-900 shadow-sm";
+                signupBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all text-purple-700 hover:text-purple-950";
+            } else {
+                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                signupBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-purple-900 shadow-sm";
+                loginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all text-purple-700 hover:text-purple-950";
+            }
+        }
+
+        async function handleSignup(e) {
+            e.preventDefault();
+            const id = document.getElementById('signup-id').value.trim();
+            const name = document.getElementById('signup-name').value.trim();
+            const pw = document.getElementById('signup-pw').value;
+            const pwConfirm = document.getElementById('signup-pw-confirm').value;
+            const msg = document.getElementById('auth-msg');
+            const submitBtn = document.getElementById('signup-submit-btn');
+
+            if (pw !== pwConfirm) {
+                msg.className = "text-xs text-center mt-3 font-semibold text-pink-600";
+                msg.innerText = '비밀번호가 일치하지 않습니다.';
+                return;
+            }
+
+            submitBtn.innerHTML = `<div class="spinner"></div> <span>처리 중...</span>`;
+            submitBtn.disabled = true;
+
+            // 구글 시트 DB 연동 모드
+            if (GOOGLE_SCRIPT_URL) {
+                const res = await callGoogleAPI({ action: 'signup', id, name, pw });
+                submitBtn.innerHTML = `<span>회원가입 완료 🍉</span>`;
+                submitBtn.disabled = false;
+
+                if (res && !res.success) {
+                    msg.className = "text-xs text-center mt-3 font-semibold text-pink-600";
+                    msg.innerText = res.message || '회원가입 실패';
+                    return;
+                }
+            } else {
+                // LocalStorage 모드
+                if (usersData[id]) {
+                    msg.className = "text-xs text-center mt-3 font-semibold text-pink-600";
+                    msg.innerText = '이미 가입된 학번입니다.';
+                    submitBtn.innerHTML = `<span>회원가입 완료 🍉</span>`;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                usersData[id] = { id, name, pw };
+                localStorage.setItem('susi_app_users', JSON.stringify(usersData));
+
+                const initialCards = Array.from({ length: 12 }, (_, i) => ({
+                    id: i + 1, university: '', department: '', type: '',
+                    interviewDate: '', docDate: '', passDate: '',
+                    step1: '미발표', finalResult: '미발표', waitNum: '', teacherNote: ''
+                }));
+                localStorage.setItem(`susi_cards_${id}`, JSON.stringify(initialCards));
+            }
+
+            msg.innerText = '구글 DB 가입 완료! 로그인 해주세요 🍉';
+            msg.className = "text-xs text-center mt-3 font-semibold text-emerald-600";
+            
+            setTimeout(() => {
+                switchAuthTab('login');
+                document.getElementById('login-id').value = id;
+            }, 1000);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const id = document.getElementById('login-id').value.trim();
+            const pw = document.getElementById('login-pw').value;
+            const msg = document.getElementById('auth-msg');
+            const submitBtn = document.getElementById('login-submit-btn');
+
+            submitBtn.innerHTML = `<div class="spinner"></div> <span>로그인 중...</span>`;
+            submitBtn.disabled = true;
+
+            if (GOOGLE_SCRIPT_URL) {
+                const res = await callGoogleAPI({ action: 'login', id, pw });
+                submitBtn.innerHTML = `<span>수시 노트 열기</span> <i class="fa-solid fa-arrow-right"></i>`;
+                submitBtn.disabled = false;
+
+                if (!res || !res.success) {
+                    msg.className = "text-xs text-center mt-3 font-semibold text-pink-600";
+                    msg.innerText = res ? res.message : '로그인 오류가 발생했습니다.';
+                    return;
+                }
+                usersData[id] = { id, name: res.name, pw };
+            } else {
+                submitBtn.innerHTML = `<span>수시 노트 열기</span> <i class="fa-solid fa-arrow-right"></i>`;
+                submitBtn.disabled = false;
+                if (!usersData[id] || usersData[id].pw !== pw) {
+                    msg.className = "text-xs text-center mt-3 font-semibold text-pink-600";
+                    msg.innerText = '학번 또는 비밀번호가 올바르지 않습니다.';
+                    return;
+                }
+            }
+
+            currentUser = id;
+            sessionStorage.setItem('susi_current_user', id);
+            showMainApp();
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('susi_current_user');
+            currentUser = null;
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('bottom-banner').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        async function showMainApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('flex');
+            document.getElementById('bottom-banner').classList.remove('hidden');
+
+            const user = usersData[currentUser];
+            document.getElementById('user-display-info').innerText = `${user.id} ${user.name || ''}`;
+
+            await loadUserCards();
+            renderAllCards();
+        }
+
+        async function loadUserCards() {
+            if (GOOGLE_SCRIPT_URL) {
+                const res = await callGoogleAPI({ action: 'getCards', studentId: currentUser });
+                if (res && res.success && res.cards) {
+                    cardsData = res.cards;
+                    return;
+                }
+            }
+            // LocalStorage Fallback
+            const saved = localStorage.getItem(`susi_cards_${currentUser}`);
+            if (saved) {
+                cardsData = JSON.parse(saved);
+            } else {
+                cardsData = Array.from({ length: 12 }, (_, i) => ({
+                    id: i + 1, university: '', department: '', type: '',
+                    interviewDate: '', docDate: '', passDate: '',
+                    step1: '미발표', finalResult: '미발표', waitNum: '', teacherNote: ''
+                }));
+            }
+        }
+
+        function renderAllCards() {
+            const container4yr = document.getElementById('cards-container-4yr');
+            const container2yr = document.getElementById('cards-container-2yr');
+
+            container4yr.innerHTML = '';
+            container2yr.innerHTML = '';
+
+            cardsData.forEach((card, index) => {
+                const isFourYear = index < 6;
+                const colorScheme = POSTIT_COLORS[index % POSTIT_COLORS.length];
+                const cardLabel = isFourYear ? `4년제 ${index + 1}번` : `전문대 ${index - 5}번`;
+
+                const cardHtml = `
+                    <div class="post-it ${colorScheme.bg} ${colorScheme.border} border p-4 flex flex-col justify-between relative">
+                        <div class="tape"></div>
+
+                        <div class="flex items-center justify-between mb-2.5 relative z-10 pt-1">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${colorScheme.badge}">
+                                📌 ${cardLabel}
+                            </span>
+                            <span class="text-[11px] text-gray-400 font-semibold">Card #${card.id}</span>
+                        </div>
+
+                        <div class="space-y-2 relative z-10 text-xs">
+                            <div class="flex gap-2">
+                                <input type="text" value="${card.university || ''}" onchange="updateCardField(${card.id}, 'university', this.value)" placeholder="학교명 (예: 고려대)" class="post-it-input w-1/2 font-bold text-gray-900">
+                                <input type="text" value="${card.department || ''}" onchange="updateCardField(${card.id}, 'department', this.value)" placeholder="학과명 (예: 경영학과)" class="post-it-input w-1/2 font-medium">
+                            </div>
+
+                            <div>
+                                <input type="text" value="${card.type || ''}" onchange="updateCardField(${card.id}, 'type', this.value)" placeholder="전형명 (예: 학생부교과, 학교장추천)" class="post-it-input text-gray-800 font-medium">
+                            </div>
+
+                            <div class="bg-white/60 p-2 rounded-xl border border-white/80 space-y-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] text-purple-900 font-bold shrink-0 w-20">🗣️ 면접/실기:</span>
+                                    <input type="date" value="${card.interviewDate || ''}" onchange="updateCardField(${card.id}, 'interviewDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] text-teal-900 font-bold shrink-0 w-20">📄 서류제출:</span>
+                                    <input type="date" value="${card.docDate || ''}" onchange="updateCardField(${card.id}, 'docDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] text-pink-900 font-bold shrink-0 w-20">🎉 합격발표:</span>
+                                    <input type="date" value="${card.passDate || ''}" onchange="updateCardField(${card.id}, 'passDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 bg-white/60 p-2 rounded-xl border border-white/80">
+                                <div>
+                                    <label class="block text-[10px] text-gray-500 font-bold mb-0.5">1단계 통과여부</label>
+                                    <select onchange="updateCardField(${card.id}, 'step1', this.value)" class="post-it-input py-1 text-xs font-semibold">
+                                        <option value="미발표" ${card.step1 === '미발표' ? 'selected' : ''}>미발표</option>
+                                        <option value="1단계통과" ${card.step1 === '1단계통과' ? 'selected' : ''}>🎉 1단계통과</option>
+                                        <option value="불합격" ${card.step1 === '불합격' ? 'selected' : ''}>불합격</option>
+                                        <option value="해당없음" ${card.step1 === '해당없음' ? 'selected' : ''}>해당없음</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-500 font-bold mb-0.5">최종 합격결과</label>
+                                    <select onchange="updateCardField(${card.id}, 'finalResult', this.value)" class="post-it-input py-1 text-xs font-semibold">
+                                        <option value="미발표" ${card.finalResult === '미발표' ? 'selected' : ''}>미발표</option>
+                                        <option value="최종합격" ${card.finalResult === '최종합격' ? 'selected' : ''}>👑 최초합격</option>
+                                        <option value="충원합격" ${card.finalResult === '충원합격' ? 'selected' : ''}>🍀 충원합격</option>
+                                        <option value="예비후보" ${card.finalResult === '예비후보' ? 'selected' : ''}>⏳ 예비후보</option>
+                                        <option value="불합격" ${card.finalResult === '불합격' ? 'selected' : ''}>불합격</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-gray-600 font-bold shrink-0 text-[11px] pl-0.5">후보 번호:</span>
+                                <input type="text" value="${card.waitNum || ''}" onchange="updateCardField(${card.id}, 'waitNum', this.value)" placeholder="예비 번호 (예: 3번)" class="post-it-input py-1 text-xs">
+                            </div>
+
+                            <div class="pt-0.5">
+                                <label class="block text-[10px] font-bold text-purple-950 mb-0.5 flex items-center gap-1">
+                                    <i class="fa-solid fa-comment-dots text-pink-500"></i> 담임선생님 메모/조언
+                                </label>
+                                <textarea onchange="updateCardField(${card.id}, 'teacherNote', this.value)" placeholder="선생님의 조언이나 특이사항을 작성해 주세요." class="post-it-input text-xs h-12 resize-none bg-white/60 font-medium">${card.teacherNote || ''}</textarea>
+                            </div>
+
+                        </div>
+                    </div>
+                `;
+
+                if (isFourYear) container4yr.insertAdjacentHTML('beforeend', cardHtml);
+                else container2yr.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function updateCardField(cardId, field, value) {
+            const targetCard = cardsData.find(c => c.id === cardId);
+            if (targetCard) {
+                targetCard[field] = value;
+            }
+        }
+
+        async function saveAllCards() {
+            const btn = document.getElementById('save-cards-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<div class="spinner"></div> <span>저장 중...</span>`;
+            btn.disabled = true;
+
+            if (GOOGLE_SCRIPT_URL) {
+                await callGoogleAPI({ action: 'saveCards', studentId: currentUser, cards: cardsData });
+            } else {
+                localStorage.setItem(`susi_cards_${currentUser}`, JSON.stringify(cardsData));
+            }
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            const msgBox = document.createElement('div');
+            msgBox.className = "fixed top-5 right-5 z-50 bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-xl font-bold text-xs flex items-center gap-2 transition-all";
+            msgBox.innerHTML = `<i class="fa-solid fa-circle-check text-base"></i> 구글 DB에 수시 지원 카드가 저장되었습니다 🍉`;
+            document.body.appendChild(msgBox);
+            setTimeout(() => msgBox.remove(), 2500);
+        }
+
+        function openCalendarModal() {
+            document.getElementById('calendar-modal').classList.remove('hidden');
+        }
+
+        function closeCalendarModal() {
+            document.getElementById('calendar-modal').classList.add('hidden');
+        }
+
+        function getStoredAdminPass() {
+            return localStorage.getItem('susi_admin_pass') || '1234';
+        }
+
+        async function verifyAdminPass() {
+            const pass = document.getElementById('admin-pass-input').value;
+            const msg = document.getElementById('admin-auth-msg');
+
+            if (pass === getStoredAdminPass()) {
+                document.getElementById('calendar-auth-view').classList.add('hidden');
+                document.getElementById('calendar-content-view').classList.remove('hidden');
+
+                // 구글 DB 전체 데이터 로드
+                if (GOOGLE_SCRIPT_URL) {
+                    msg.className = "text-xs text-purple-600 mt-2 font-semibold";
+                    msg.innerText = '구글 시트에서 전체 학급 일정을 불러오는 중입니다...';
+                    globalAllData = await callGoogleAPI({ action: 'getAllData' });
+                }
+
+                renderCalendar();
+            } else {
+                msg.className = "text-xs text-red-500 mt-2 font-semibold min-h-[1rem]";
+                msg.innerText = '비밀번호가 올바르지 않습니다.';
+            }
+        }
+
+        function toggleChangePassView() {
+            document.getElementById('change-pass-box').classList.toggle('hidden');
+        }
+
+        function handleUpdateAdminPass() {
+            const curPass = document.getElementById('cur-pass-input').value;
+            const newPass = document.getElementById('new-pass-input').value;
+            const msg = document.getElementById('admin-auth-msg');
+
+            if (curPass !== getStoredAdminPass()) {
+                msg.className = "text-xs text-red-500 mt-2 font-semibold min-h-[1rem]";
+                msg.innerText = '현재 비밀번호가 일치하지 않습니다.';
+                return;
+            }
+
+            if (!newPass.trim()) {
+                msg.className = "text-xs text-red-500 mt-2 font-semibold min-h-[1rem]";
+                msg.innerText = '새 비밀번호를 입력해 주세요.';
+                return;
+            }
+
+            localStorage.setItem('susi_admin_pass', newPass.trim());
+            msg.className = "text-xs text-emerald-600 mt-2 font-semibold min-h-[1rem]";
+            msg.innerText = '선생님 비밀번호가 변경되었습니다! 🍉';
+            document.getElementById('cur-pass-input').value = '';
+            document.getElementById('new-pass-input').value = '';
+            
+            setTimeout(() => {
+                document.getElementById('change-pass-box').classList.add('hidden');
+            }, 1500);
+        }
+
+        function getClassInfo(studentId) {
+            if (!studentId || studentId.length < 3) return { code: 'ETC', label: '기타' };
+            const grade = studentId.charAt(0);
+            const classNum = parseInt(studentId.substring(1, 3), 10);
+            if (!isNaN(classNum) && grade === '3') {
+                const code = `3${String(classNum).padStart(2, '0')}`;
+                return { code: code, label: `3-${classNum}반` };
+            }
+            return { code: studentId.slice(0, 3), label: `${studentId.slice(0, 3)}` };
+        }
+
+        function renderCalendar() {
+            const selectedMonth = parseInt(document.getElementById('calendar-month-select').value);
+            const typeFilter = document.getElementById('calendar-type-filter').value;
+            const classFilter = document.getElementById('calendar-class-filter').value;
+            const year = 2026;
+
+            const grid = document.getElementById('calendar-days-grid');
+            const listContainer = document.getElementById('calendar-events-list');
+            grid.innerHTML = '';
+            listContainer.innerHTML = '';
+
+            let allEvents = [];
+
+            const dataSourceUsers = (GOOGLE_SCRIPT_URL && globalAllData && globalAllData.users) ? globalAllData.users : usersData;
+
+            Object.keys(dataSourceUsers).forEach(studentId => {
+                const classInfo = getClassInfo(studentId);
+                
+                if (classFilter !== 'ALL' && classInfo.code !== classFilter) return;
+
+                const student = dataSourceUsers[studentId];
+                let studentCards = [];
+
+                if (GOOGLE_SCRIPT_URL && globalAllData && globalAllData.cards) {
+                    studentCards = globalAllData.cards[studentId] || [];
+                } else {
+                    studentCards = JSON.parse(localStorage.getItem(`susi_cards_${studentId}`)) || [];
+                }
+
+                studentCards.forEach(card => {
+                    if (card.university || card.department) {
+                        const uniDept = `${card.university || '미정'} ${card.department || ''}`.trim();
+
+                        if (card.interviewDate && (typeFilter === 'ALL' || typeFilter === 'INTERVIEW')) {
+                            allEvents.push({
+                                studentId: student.id, studentName: student.name,
+                                classLabel: classInfo.label, classCode: classInfo.code,
+                                universityInfo: uniDept, typeName: card.type || '미기재 전형',
+                                date: card.interviewDate, category: 'INTERVIEW', categoryLabel: '🗣️ 면접/실기',
+                                badgeColor: 'bg-purple-100 text-purple-900 border-purple-200'
+                            });
+                        }
+                        if (card.docDate && (typeFilter === 'ALL' || typeFilter === 'DOC')) {
+                            allEvents.push({
+                                studentId: student.id, studentName: student.name,
+                                classLabel: classInfo.label, classCode: classInfo.code,
+                                universityInfo: uniDept, typeName: card.type || '미기재 전형',
+                                date: card.docDate, category: 'DOC', categoryLabel: '📄 서류제출',
+                                badgeColor: 'bg-teal-100 text-teal-900 border-teal-200'
+                            });
+                        }
+                        if (card.passDate && (typeFilter === 'ALL' || typeFilter === 'PASS')) {
+                            allEvents.push({
+                                studentId: student.id, studentName: student.name,
+                                classLabel: classInfo.label, classCode: classInfo.code,
+                                universityInfo: uniDept, typeName: card.type || '미기재 전형',
+                                date: card.passDate, category: 'PASS', categoryLabel: '🎉 합격발표',
+                                badgeColor: 'bg-pink-100 text-pink-900 border-pink-200'
+                            });
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('total-events-count').innerText = allEvents.length;
+
+            const firstDayIndex = new Date(year, selectedMonth - 1, 1).getDay();
+            const totalDaysInMonth = new Date(year, selectedMonth, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                grid.insertAdjacentHTML('beforeend', `<div class="bg-gray-100/50 rounded-lg"></div>`);
+            }
+
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const dateStr = `${year}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayEvents = allEvents.filter(e => e.date === dateStr);
+
+                let dayCellHtml = `
+                    <div class="bg-white rounded-lg p-1 border border-purple-100 flex flex-col justify-between hover:border-purple-300 transition text-[11px] min-h-[55px]">
+                        <span class="font-bold text-gray-700">${day}</span>
+                        <div class="space-y-0.5 overflow-hidden">
+                `;
+
+                dayEvents.forEach(ev => {
+                    dayCellHtml += `
+                        <div class="${ev.badgeColor} px-1 py-0.5 rounded text-[9px] font-bold truncate border" title="[${ev.classLabel}] ${ev.studentName}: ${ev.universityInfo} (${ev.categoryLabel})">
+                            [${ev.classLabel}] ${ev.studentName ? ev.studentName.slice(-2) : '학생'}: ${ev.universityInfo.split(' ')[0]}
+                        </div>
+                    `;
+                });
+
+                dayCellHtml += `</div></div>`;
+                grid.insertAdjacentHTML('beforeend', dayCellHtml);
+            }
+
+            if (allEvents.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-12 text-gray-400 text-xs font-medium">
+                        <i class="fa-solid fa-calendar-xmark text-3xl mb-2 text-purple-200"></i>
+                        <p>해당하는 일정이 없습니다.</p>
+                    </div>
+                `;
+            } else {
+                allEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                allEvents.forEach(ev => {
+                    const eventItemHtml = `
+                        <div class="p-2.5 rounded-xl border border-purple-100 bg-purple-50/30 hover:bg-purple-50/80 transition text-xs flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="bg-purple-200/80 text-purple-900 text-[10px] px-1.5 py-0.5 rounded-md font-extrabold">${ev.classLabel}</span>
+                                    <span class="font-bold text-purple-950">${ev.studentId} ${ev.studentName || ''}</span>
+                                </div>
+                                <span class="font-extrabold px-2 py-0.5 rounded-md text-[10px] border ${ev.badgeColor}">
+                                    ${ev.categoryLabel}
+                                </span>
+                            </div>
+                            <div class="text-gray-900 font-bold pl-0.5">
+                                ${ev.universityInfo}
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-gray-500 font-medium pl-0.5">
+                                <span>전형: ${ev.typeName}</span>
+                                <span class="font-bold text-purple-700">🗓️ ${ev.date}</span>
+                            </div>
+                        </div>
+                    `;
+                    listContainer.insertAdjacentHTML('beforeend', eventItemHtml);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
