@@ -125,7 +125,10 @@
 </head>
 <body class="p-3 md:p-6 text-gray-800 flex flex-col min-h-screen font-sans">
 
-    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-purple-900/20 backdrop-blur-md">
+    <!-- 로그인/회원가입 화면 -->
+    <div id="auth-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-purple-900/20 backdrop-blur-md">
+        <div></div> <!-- 상단 여백 보정용 -->
+        
         <div class="glass-card w-full max-w-md p-7 md:p-8 rounded-3xl shadow-2xl relative overflow-hidden transition-all duration-300">
             
             <div class="text-center mb-6">
@@ -210,9 +213,15 @@
             
             <p id="auth-msg" class="text-xs text-center mt-3 font-semibold text-pink-600 min-h-[1rem]"></p>
         </div>
+
+        <!-- 인증 화면 Footer -->
+        <footer class="text-center text-xs text-purple-950/70 font-medium py-2">
+            Copyright © 2026 이유리선생님. All rights reserved.
+        </footer>
     </div>
 
-    <div id="main-app" class="hidden flex-col max-w-7xl mx-auto w-full flex-grow pb-24">
+    <!-- 메인 앱 화면 -->
+    <div id="main-app" class="hidden flex-col max-w-7xl mx-auto w-full flex-grow pb-28">
         
         <header class="glass-card rounded-2xl p-4 md:p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 border border-white/80">
             <div class="flex items-center gap-3">
@@ -264,9 +273,14 @@
             <span class="text-xs bg-teal-200/70 text-teal-900 px-3 py-1 rounded-full font-bold">7번 ~ 12번 카드</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             <div id="cards-container-2yr" class="contents"></div>
         </div>
+
+        <!-- 메인 앱 Footer -->
+        <footer class="text-center text-xs text-purple-950/70 font-medium py-4 mt-auto">
+            Copyright © 2026 이유리선생님. All rights reserved.
+        </footer>
     </div>
 
     <!-- 하단 학급 달력 배너 -->
@@ -284,6 +298,7 @@
         </div>
     </div>
 
+    <!-- 학급 달력 모달 -->
     <div id="calendar-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/40 backdrop-blur-sm hidden">
         <div class="glass-card w-full max-w-5xl h-[90vh] rounded-3xl p-5 md:p-7 flex flex-col relative overflow-hidden bg-white/95">
             
