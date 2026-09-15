@@ -2,17 +2,22 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <!-- 모바일 환경에서도 화면이 꽉 차고 안정적으로 보이도록 뷰포트 설정 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2027학년도 정왕고등학교 수시대박 🍉</title>
-    <!-- Tailwind CSS CDN -->
+    
+    <!-- Tailwind CSS CDN : 스타일링을 위한 프레임워크 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Noto Sans KR -->
+    
+    <!-- Google Fonts: Noto Sans KR (깔끔한 한글 폰트) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
+    
+    <!-- FontAwesome Icons (아이콘 사용) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Tailwind 테마 확장 (커스텀 컬러 및 폰트 적용) -->
     <script>
         tailwind.config = {
             theme: {
@@ -33,6 +38,7 @@
         }
     </script>
 
+    <!-- 커스텀 CSS (포스트잇 효과, 스크롤바, 애니메이션 등) -->
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -229,7 +235,7 @@
                 <div>
                     <h1 class="text-xl md:text-2xl font-extrabold text-purple-950 tracking-tight">2027학년도 정왕고등학교 수시대박 🍉</h1>
                     <p class="text-xs md:text-sm text-purple-700 mt-0.5">
-                        <span id="user-display-info" class="font-bold text-pink-600">30901 홍길동</span> 학생의 12개 수시 지원 카드 현황
+                        <span id="user-display-info" class="font-bold text-pink-600"></span> 학생의 12개 수시 지원 카드 현황
                     </p>
                 </div>
             </div>
@@ -304,7 +310,7 @@
                     <span class="text-2xl">📅</span>
                     <div>
                         <h2 class="text-lg md:text-xl font-bold text-purple-950">정왕고등학교 수시 일정 통합 달력</h2>
-                        <p class="text-xs text-gray-500 font-medium">학급 전체 학생들의 면접, 실기, 서류제출, 합격발표 일정 모아보기</p>
+                        <p class="text-xs text-gray-500 font-medium">학급 전체 학생들의 면접(보라 🟣), 실기(노랑 🟡), 서류제출, 합격발표 일정</p>
                     </div>
                 </div>
                 <button onclick="closeCalendarModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition">
@@ -381,8 +387,8 @@
                             <span class="text-xs font-bold text-purple-900">📌 구분:</span>
                             <select id="calendar-type-filter" onchange="renderCalendar()" class="bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1 text-xs font-bold text-purple-900 focus:outline-none">
                                 <option value="ALL">전체 일정 보기</option>
-                                <option value="INTERVIEW">🗣️ 면접일</option>
-                                <option value="PRACTICAL">🎨 실기일</option>
+                                <option value="INTERVIEW">🗣️ 면접일 (보라)</option>
+                                <option value="PRACTICAL">🎨 실기일 (노랑)</option>
                                 <option value="DOC">📄 서류제출</option>
                                 <option value="PASS">🎉 합격발표</option>
                             </select>
@@ -421,9 +427,11 @@
         </div>
     </div>
 
+    <!-- 자바스크립트 로직 (데이터 처리, UI 조작, 통신) -->
     <script>
         // -------------------------------------------------------------
         // ★ 구글 앱스 스크립트 웹 앱 URL ★
+        // (만약 본인만의 시트와 연결하려면 아래 URL을 배포받은 주소로 변경하세요)
         // -------------------------------------------------------------
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOYRrmSPoBFz5JLXwk04cm3-_ejio_1sR_Bo7vpDDc6WCWzIT7v6VSdD75HNA7lvWMbw/exec";
 
@@ -440,7 +448,7 @@
         let usersData = JSON.parse(localStorage.getItem('susi_app_users')) || {};
         let cardsData = []; 
         let globalAllData = null; // 달력용 구글 시트 전체 데이터
-        let activeCardTabs = {};  // 각 수시 지원 카드의 대학별고사 탭 상태 (none / interview / practical)
+        let activeCardTabs = {};  // 각 지원 카드의 대학별고사 탭 상태 (none / interview / practical)
 
         /**
          * 어떤 날짜 형태라도 YYYY-MM-DD 포맷으로 변환하는 정규화 함수
@@ -547,6 +555,7 @@
                 }
             }
 
+            // 로컬 스토리지 백업
             usersData[id] = { id, name, pw };
             localStorage.setItem('susi_app_users', JSON.stringify(usersData));
 
@@ -607,6 +616,7 @@
             submitBtn.innerHTML = `<span>수시 노트 열기</span> <i class="fa-solid fa-arrow-right"></i>`;
             submitBtn.disabled = false;
 
+            // 로컬 스토리지 폴백 로그인
             if (usersData[id] && usersData[id].pw === pw) {
                 currentUser = id;
                 sessionStorage.setItem('susi_current_user', id);
@@ -652,6 +662,8 @@
                     return;
                 }
             }
+            
+            // 로컬 데이터 폴백
             const saved = localStorage.getItem(`susi_cards_${currentUser}`);
             if (saved) {
                 cardsData = JSON.parse(saved).map(c => ({
@@ -671,10 +683,24 @@
         }
 
         /**
-         * 대학별고사 탭 전환 (none / interview / practical)
+         * 대학별고사 탭 전환 (none / interview / practical) 및 선택하지 않은 고사 일자 자동 정제
          */
         function switchCardTab(cardId, tabType) {
             activeCardTabs[cardId] = tabType;
+            
+            const targetCard = cardsData.find(c => c.id === cardId);
+            if (targetCard) {
+                if (tabType === 'none') {
+                    targetCard.interviewDate = '';
+                    targetCard.practicalDate = '';
+                } else if (tabType === 'interview') {
+                    targetCard.practicalDate = ''; // 면접선택 시 실기일 청소
+                } else if (tabType === 'practical') {
+                    targetCard.interviewDate = ''; // 실기선택 시 면접일 청소
+                }
+                syncLocalAndGlobal();
+            }
+
             const interviewBox = document.getElementById(`card-${cardId}-tab-interview`);
             const practicalBox = document.getElementById(`card-${cardId}-tab-practical`);
             const noneBox = document.getElementById(`card-${cardId}-tab-none`);
@@ -701,6 +727,11 @@
                 btnPractical.className = tabType === 'practical'
                     ? "flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-amber-500 text-white shadow-sm"
                     : "flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-gray-100 text-gray-600 hover:bg-gray-200";
+            }
+
+            // 캘린더 모달이 열려 있다면 즉각 재렌더링
+            if (!document.getElementById('calendar-modal').classList.contains('hidden')) {
+                renderCalendar();
             }
         }
 
@@ -810,8 +841,10 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] text-gray-500 font-bold mb-0.5">최종 합격결과</label>
-                                    <select onchange="updateCardField(${card.id}, 'finalResult', this.value)" class="post-it-input py-1 text-xs font-semibold">
+                                    <label class="block text-[10px] text-red-600 font-extrabold mb-0.5 flex items-center gap-0.5">
+                                        <i class="fa-solid fa-thumbtack text-red-500"></i> 최종 합격결과
+                                    </label>
+                                    <select onchange="updateCardField(${card.id}, 'finalResult', this.value)" class="post-it-input py-1 text-xs font-bold text-red-700 border-red-200 bg-red-50/50">
                                         <option value="미발표" ${card.finalResult === '미발표' ? 'selected' : ''}>미발표</option>
                                         <option value="최종합격" ${card.finalResult === '최종합격' ? 'selected' : ''}>👑 최초합격</option>
                                         <option value="충원합격" ${card.finalResult === '충원합격' ? 'selected' : ''}>🍀 충원합격</option>
@@ -842,10 +875,34 @@
             });
         }
 
+        /**
+         * 카드 데이터 동기화 헬퍼 (로컬스토리지 및 캘린더 전역 객체 즉각 반영)
+         */
+        function syncLocalAndGlobal() {
+            if (!currentUser) return;
+            localStorage.setItem(`susi_cards_${currentUser}`, JSON.stringify(cardsData));
+            if (globalAllData) {
+                if (!globalAllData.cards) globalAllData.cards = {};
+                globalAllData.cards[currentUser] = cardsData;
+            }
+        }
+
         function updateCardField(cardId, field, value) {
             const targetCard = cardsData.find(c => c.id === cardId);
             if (targetCard) {
                 targetCard[field] = value;
+                
+                // 날짜일 경우 YYYY-MM-DD 정규화
+                if (['interviewDate', 'practicalDate', 'docDate', 'passDate'].includes(field)) {
+                    targetCard[field] = formatDateToYYYYMMDD(value);
+                }
+
+                syncLocalAndGlobal();
+
+                // 캘린더 모달이 활성화된 경우 즉각 캘린더 업데이트
+                if (!document.getElementById('calendar-modal').classList.contains('hidden')) {
+                    renderCalendar();
+                }
             }
         }
 
@@ -855,10 +912,10 @@
             btn.innerHTML = `<div class="spinner"></div> <span>저장 중...</span>`;
             btn.disabled = true;
 
+            syncLocalAndGlobal();
+
             if (GOOGLE_SCRIPT_URL) {
                 await callGoogleAPI({ action: 'saveCards', studentId: currentUser, cards: cardsData });
-            } else {
-                localStorage.setItem(`susi_cards_${currentUser}`, JSON.stringify(cardsData));
             }
 
             btn.innerHTML = originalText;
@@ -872,7 +929,13 @@
         }
 
         function openCalendarModal() {
+            syncLocalAndGlobal();
             document.getElementById('calendar-modal').classList.remove('hidden');
+            
+            // 만약 이미 관리 인증을 받은 상태라면 바로 캘린더 갱신
+            if (!document.getElementById('calendar-content-view').classList.contains('hidden')) {
+                renderCalendar();
+            }
         }
 
         function closeCalendarModal() {
@@ -895,6 +958,11 @@
                     msg.className = "text-xs text-purple-600 mt-2 font-semibold";
                     msg.innerText = '구글 시트에서 전체 학급 일정을 불러오는 중입니다...';
                     globalAllData = await callGoogleAPI({ action: 'getAllData' });
+                    // 현재 수정사항 덮어씌움
+                    if (globalAllData && currentUser) {
+                        if (!globalAllData.cards) globalAllData.cards = {};
+                        globalAllData.cards[currentUser] = cardsData;
+                    }
                 }
 
                 renderCalendar();
@@ -961,6 +1029,9 @@
             let allEvents = [];
 
             const dataSourceUsers = (GOOGLE_SCRIPT_URL && globalAllData && globalAllData.users) ? globalAllData.users : usersData;
+            if (currentUser && !dataSourceUsers[currentUser]) {
+                dataSourceUsers[currentUser] = usersData[currentUser] || { id: currentUser, name: '' };
+            }
 
             Object.keys(dataSourceUsers).forEach(studentId => {
                 const classInfo = getClassInfo(studentId);
@@ -972,7 +1043,9 @@
 
                 let studentCards = [];
 
-                if (GOOGLE_SCRIPT_URL && globalAllData && globalAllData.cards) {
+                if (studentId === currentUser) {
+                    studentCards = cardsData; // 현재 사용자의 최신 수정 데이터 직접 사용
+                } else if (GOOGLE_SCRIPT_URL && globalAllData && globalAllData.cards && globalAllData.cards[studentId]) {
                     studentCards = globalAllData.cards[studentId] || [];
                 } else {
                     studentCards = JSON.parse(localStorage.getItem(`susi_cards_${studentId}`)) || [];
@@ -988,6 +1061,7 @@
                         const docDateFormatted = formatDateToYYYYMMDD(card.docDate);
                         const passDateFormatted = formatDateToYYYYMMDD(card.passDate);
 
+                        // 면접일 이벤트 (보라색 🟣)
                         if (interviewDateFormatted && (typeFilter === 'ALL' || typeFilter === 'INTERVIEW')) {
                             allEvents.push({
                                 studentId: studentId, 
@@ -999,10 +1073,11 @@
                                 date: interviewDateFormatted, 
                                 category: 'INTERVIEW', 
                                 categoryLabel: '🗣️ 면접일',
-                                badgeColor: 'bg-purple-100 text-purple-950 border-purple-300'
+                                badgeColor: 'bg-purple-100 text-purple-900 border-purple-300'
                             });
                         }
 
+                        // 실기일 이벤트 (노란색/호박색 🟡)
                         if (practicalDateFormatted && (typeFilter === 'ALL' || typeFilter === 'PRACTICAL')) {
                             allEvents.push({
                                 studentId: studentId, 
@@ -1014,10 +1089,11 @@
                                 date: practicalDateFormatted, 
                                 category: 'PRACTICAL', 
                                 categoryLabel: '🎨 실기일',
-                                badgeColor: 'bg-amber-100 text-amber-950 border-amber-300'
+                                badgeColor: 'bg-amber-200 text-amber-950 border-amber-400 font-extrabold'
                             });
                         }
 
+                        // 서류제출 이벤트 (청록색 📄)
                         if (docDateFormatted && (typeFilter === 'ALL' || typeFilter === 'DOC')) {
                             allEvents.push({
                                 studentId: studentId, 
@@ -1029,10 +1105,11 @@
                                 date: docDateFormatted, 
                                 category: 'DOC', 
                                 categoryLabel: '📄 서류제출',
-                                badgeColor: 'bg-teal-100 text-teal-950 border-teal-300'
+                                badgeColor: 'bg-teal-100 text-teal-900 border-teal-300'
                             });
                         }
 
+                        // 합격발표 이벤트 (분홍색 🎉)
                         if (passDateFormatted && (typeFilter === 'ALL' || typeFilter === 'PASS')) {
                             allEvents.push({
                                 studentId: studentId, 
@@ -1044,7 +1121,7 @@
                                 date: passDateFormatted, 
                                 category: 'PASS', 
                                 categoryLabel: '🎉 합격발표',
-                                badgeColor: 'bg-pink-100 text-pink-950 border-pink-300'
+                                badgeColor: 'bg-pink-100 text-pink-900 border-pink-300'
                             });
                         }
                     }
@@ -1074,9 +1151,17 @@
                     const displayName = ev.studentName ? ev.studentName : ev.studentId;
                     const uniShort = ev.universityInfo.split(' ')[0];
 
+                    const emojiMap = {
+                        'INTERVIEW': '🗣️',
+                        'PRACTICAL': '🎨',
+                        'DOC': '📄',
+                        'PASS': '🎉'
+                    };
+                    const emoji = emojiMap[ev.category] || '📌';
+
                     dayCellHtml += `
-                        <div class="${ev.badgeColor} px-1 py-0.5 rounded text-[9px] font-bold truncate border shadow-xs" title="[${ev.classLabel}] ${displayName}: ${ev.universityInfo} (${ev.categoryLabel})">
-                            [${ev.classLabel}] ${displayName}: ${uniShort}
+                        <div class="${ev.badgeColor} px-1 py-0.5 rounded text-[9.5px] font-bold truncate border shadow-xs" title="[${ev.classLabel}] ${displayName}: ${ev.universityInfo} (${ev.categoryLabel})">
+                            ${emoji} ${displayName}: ${uniShort}
                         </div>
                     `;
                 });
