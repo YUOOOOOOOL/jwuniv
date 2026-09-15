@@ -2,22 +2,15 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- 모바일 환경에서도 화면이 꽉 차고 안정적으로 보이도록 뷰포트 설정 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2027학년도 정왕고등학교 수시대박 🍉</title>
     
-    <!-- Tailwind CSS CDN : 스타일링을 위한 프레임워크 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Noto Sans KR (깔끔한 한글 폰트) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome Icons (아이콘 사용) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Tailwind 테마 확장 (커스텀 컬러 및 폰트 적용) -->
     <script>
         tailwind.config = {
             theme: {
@@ -38,7 +31,6 @@
         }
     </script>
 
-    <!-- 커스텀 CSS (포스트잇 효과, 스크롤바, 애니메이션 등) -->
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -130,7 +122,6 @@
 </head>
 <body class="p-3 md:p-6 text-gray-800 flex flex-col min-h-screen font-sans">
 
-    <!-- 로그인/회원가입 화면 -->
     <div id="auth-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-purple-900/20 backdrop-blur-md">
         <div></div>
         
@@ -169,7 +160,6 @@
                 </button>
             </div>
 
-            <!-- 로그인 폼 -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-3.5">
                 <div>
                     <label class="block text-xs font-bold text-purple-900 mb-1">학번 (예: 30901)</label>
@@ -191,7 +181,6 @@
                 </button>
             </form>
 
-            <!-- 회원가입 폼 -->
             <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-3 hidden">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -224,7 +213,6 @@
         </footer>
     </div>
 
-    <!-- 메인 앱 화면 -->
     <div id="main-app" class="hidden flex-col max-w-7xl mx-auto w-full flex-grow pb-28">
         
         <header class="glass-card rounded-2xl p-4 md:p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 border border-white/80">
@@ -255,7 +243,6 @@
             </div>
         </header>
 
-        <!-- 4년제 대학 섹션 -->
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-base md:text-lg font-bold text-purple-950 flex items-center gap-2">
                 <i class="fa-solid fa-note-sticky text-purple-600"></i>
@@ -263,12 +250,10 @@
             </h2>
             <span class="text-xs bg-purple-200/70 text-purple-900 px-3 py-1 rounded-full font-bold">1번 ~ 6번 카드</span>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             <div id="cards-container-4yr" class="contents"></div>
         </div>
 
-        <!-- 전문대 섹션 -->
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-base md:text-lg font-bold text-teal-950 flex items-center gap-2">
                 <i class="fa-solid fa-graduation-cap text-teal-600"></i>
@@ -276,7 +261,6 @@
             </h2>
             <span class="text-xs bg-teal-200/70 text-teal-900 px-3 py-1 rounded-full font-bold">7번 ~ 12번 카드</span>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             <div id="cards-container-2yr" class="contents"></div>
         </div>
@@ -286,7 +270,6 @@
         </footer>
     </div>
 
-    <!-- 하단 학급 달력 배너 -->
     <div id="bottom-banner" class="fixed bottom-0 left-0 right-0 z-30 p-3 bg-white/90 backdrop-blur-md border-t border-purple-200 shadow-lg hidden">
         <div class="max-w-7xl mx-auto flex items-center justify-between px-2">
             <div class="flex items-center gap-2 text-xs md:text-sm text-purple-950 font-semibold">
@@ -301,7 +284,6 @@
         </div>
     </div>
 
-    <!-- 학급 달력 모달 -->
     <div id="calendar-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/40 backdrop-blur-sm hidden">
         <div class="glass-card w-full max-w-5xl h-[90vh] rounded-3xl p-5 md:p-7 flex flex-col relative overflow-hidden bg-white/95">
             
@@ -427,12 +409,7 @@
         </div>
     </div>
 
-    <!-- 자바스크립트 로직 (데이터 처리, UI 조작, 통신) -->
     <script>
-        // -------------------------------------------------------------
-        // ★ 구글 앱스 스크립트 웹 앱 URL ★
-        // (만약 본인만의 시트와 연결하려면 아래 URL을 배포받은 주소로 변경하세요)
-        // -------------------------------------------------------------
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOYRrmSPoBFz5JLXwk04cm3-_ejio_1sR_Bo7vpDDc6WCWzIT7v6VSdD75HNA7lvWMbw/exec";
 
         const POSTIT_COLORS = [
@@ -447,12 +424,9 @@
         let currentUser = null;
         let usersData = JSON.parse(localStorage.getItem('susi_app_users')) || {};
         let cardsData = []; 
-        let globalAllData = null; // 달력용 구글 시트 전체 데이터
-        let activeCardTabs = {};  // 각 지원 카드의 대학별고사 탭 상태 (none / interview / practical)
+        let globalAllData = null; 
+        let activeCardTabs = {};  
 
-        /**
-         * 어떤 날짜 형태라도 YYYY-MM-DD 포맷으로 변환하는 정규화 함수
-         */
         function formatDateToYYYYMMDD(val) {
             if (!val) return '';
             if (typeof val !== 'string') val = String(val);
@@ -555,7 +529,6 @@
                 }
             }
 
-            // 로컬 스토리지 백업
             usersData[id] = { id, name, pw };
             localStorage.setItem('susi_app_users', JSON.stringify(usersData));
 
@@ -616,7 +589,6 @@
             submitBtn.innerHTML = `<span>수시 노트 열기</span> <i class="fa-solid fa-arrow-right"></i>`;
             submitBtn.disabled = false;
 
-            // 로컬 스토리지 폴백 로그인
             if (usersData[id] && usersData[id].pw === pw) {
                 currentUser = id;
                 sessionStorage.setItem('susi_current_user', id);
@@ -663,7 +635,6 @@
                 }
             }
             
-            // 로컬 데이터 폴백
             const saved = localStorage.getItem(`susi_cards_${currentUser}`);
             if (saved) {
                 cardsData = JSON.parse(saved).map(c => ({
@@ -682,9 +653,6 @@
             }
         }
 
-        /**
-         * 대학별고사 탭 전환 (none / interview / practical) 및 선택하지 않은 고사 일자 자동 정제
-         */
         function switchCardTab(cardId, tabType) {
             activeCardTabs[cardId] = tabType;
             
@@ -694,9 +662,9 @@
                     targetCard.interviewDate = '';
                     targetCard.practicalDate = '';
                 } else if (tabType === 'interview') {
-                    targetCard.practicalDate = ''; // 면접선택 시 실기일 청소
+                    targetCard.practicalDate = ''; 
                 } else if (tabType === 'practical') {
-                    targetCard.interviewDate = ''; // 실기선택 시 면접일 청소
+                    targetCard.interviewDate = ''; 
                 }
                 syncLocalAndGlobal();
             }
@@ -729,7 +697,7 @@
                     : "flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-gray-100 text-gray-600 hover:bg-gray-200";
             }
 
-            // 캘린더 모달이 열려 있다면 즉각 재렌더링
+            // 달력이 켜져 있으면 즉시 반영
             if (!document.getElementById('calendar-modal').classList.contains('hidden')) {
                 renderCalendar();
             }
@@ -747,7 +715,6 @@
                 const colorScheme = POSTIT_COLORS[index % POSTIT_COLORS.length];
                 const cardLabel = isFourYear ? `4년제 ${index + 1}번` : `전문대 ${index - 5}번`;
 
-                // 입력된 일자에 맞춰 초기 탭 결정 (기본값: none)
                 if (!activeCardTabs[card.id]) {
                     if (card.interviewDate) activeCardTabs[card.id] = 'interview';
                     else if (card.practicalDate) activeCardTabs[card.id] = 'practical';
@@ -777,10 +744,8 @@
                                 <input type="text" value="${card.type || ''}" onchange="updateCardField(${card.id}, 'type', this.value)" placeholder="전형명 (예: 학생부교과, 학교장추천)" class="post-it-input text-gray-800 font-medium">
                             </div>
 
-                            <!-- 수시 카드 일정 영역 -->
                             <div class="bg-white/70 p-2.5 rounded-xl border border-white/90 space-y-2.5">
                                 
-                                <!-- 1. 공통 주요 일정 (서류제출 & 합격발표) -->
                                 <div class="space-y-1.5 pb-2 border-b border-gray-200/60">
                                     <div class="flex items-center gap-1.5">
                                         <span class="text-[11px] text-teal-900 font-bold shrink-0 w-20">📄 서류제출:</span>
@@ -792,7 +757,6 @@
                                     </div>
                                 </div>
 
-                                <!-- 2. 대학별고사 일정 선택 (면접 / 실기 / 없음) -->
                                 <div>
                                     <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 mb-1">
                                         <span>대학별고사 일정 (2단계 전형)</span>
@@ -810,18 +774,15 @@
                                         </button>
                                     </div>
 
-                                    <!-- 탭 1: 없음 -->
                                     <div id="card-${card.id}-tab-none" class="py-1 text-center text-[10px] text-gray-400 font-medium ${currentTab === 'none' ? '' : 'hidden'}">
                                         면접/실기 일정이 없는 일반 전형입니다.
                                     </div>
 
-                                    <!-- 탭 2: 면접일 -->
                                     <div id="card-${card.id}-tab-interview" class="flex items-center gap-1.5 ${currentTab === 'interview' ? '' : 'hidden'}">
                                         <span class="text-[11px] text-purple-900 font-bold shrink-0 w-20">🗣️ 면접일시:</span>
                                         <input type="date" value="${formatDateToYYYYMMDD(card.interviewDate)}" onchange="updateCardField(${card.id}, 'interviewDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
                                     </div>
 
-                                    <!-- 탭 3: 실기일 -->
                                     <div id="card-${card.id}-tab-practical" class="flex items-center gap-1.5 ${currentTab === 'practical' ? '' : 'hidden'}">
                                         <span class="text-[11px] text-amber-900 font-bold shrink-0 w-20">🎨 실기일시:</span>
                                         <input type="date" value="${formatDateToYYYYMMDD(card.practicalDate)}" onchange="updateCardField(${card.id}, 'practicalDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
@@ -875,15 +836,14 @@
             });
         }
 
-        /**
-         * 카드 데이터 동기화 헬퍼 (로컬스토리지 및 캘린더 전역 객체 즉각 반영)
-         */
         function syncLocalAndGlobal() {
             if (!currentUser) return;
             localStorage.setItem(`susi_cards_${currentUser}`, JSON.stringify(cardsData));
+            
+            // 핵심 수정 포인트: globalAllData에도 최신 데이터 강제 반영
             if (globalAllData) {
                 if (!globalAllData.cards) globalAllData.cards = {};
-                globalAllData.cards[currentUser] = cardsData;
+                globalAllData.cards[currentUser] = JSON.parse(JSON.stringify(cardsData)); 
             }
         }
 
@@ -892,7 +852,6 @@
             if (targetCard) {
                 targetCard[field] = value;
                 
-                // 날짜일 경우 YYYY-MM-DD 정규화
                 if (['interviewDate', 'practicalDate', 'docDate', 'passDate'].includes(field)) {
                     targetCard[field] = formatDateToYYYYMMDD(value);
                 }
@@ -932,7 +891,6 @@
             syncLocalAndGlobal();
             document.getElementById('calendar-modal').classList.remove('hidden');
             
-            // 만약 이미 관리 인증을 받은 상태라면 바로 캘린더 갱신
             if (!document.getElementById('calendar-content-view').classList.contains('hidden')) {
                 renderCalendar();
             }
@@ -958,10 +916,11 @@
                     msg.className = "text-xs text-purple-600 mt-2 font-semibold";
                     msg.innerText = '구글 시트에서 전체 학급 일정을 불러오는 중입니다...';
                     globalAllData = await callGoogleAPI({ action: 'getAllData' });
-                    // 현재 수정사항 덮어씌움
+                    
+                    // 핵심: 구글 시트 데이터를 가져온 직후에도, 현재 사용자가 작성 중인 최신 로컬 데이터를 전역 객체에 덮어씌움
                     if (globalAllData && currentUser) {
                         if (!globalAllData.cards) globalAllData.cards = {};
-                        globalAllData.cards[currentUser] = cardsData;
+                        globalAllData.cards[currentUser] = JSON.parse(JSON.stringify(cardsData));
                     }
                 }
 
@@ -1043,9 +1002,10 @@
 
                 let studentCards = [];
 
+                // ★ 핵심 수정: 현재 유저라면 무조건 방금 업데이트된 cardsData 참조!
                 if (studentId === currentUser) {
-                    studentCards = cardsData; // 현재 사용자의 최신 수정 데이터 직접 사용
-                } else if (GOOGLE_SCRIPT_URL && globalAllData && globalAllData.cards && globalAllData.cards[studentId]) {
+                    studentCards = cardsData; 
+                } else if (globalAllData && globalAllData.cards && globalAllData.cards[studentId]) {
                     studentCards = globalAllData.cards[studentId] || [];
                 } else {
                     studentCards = JSON.parse(localStorage.getItem(`susi_cards_${studentId}`)) || [];
@@ -1061,7 +1021,6 @@
                         const docDateFormatted = formatDateToYYYYMMDD(card.docDate);
                         const passDateFormatted = formatDateToYYYYMMDD(card.passDate);
 
-                        // 면접일 이벤트 (보라색 🟣)
                         if (interviewDateFormatted && (typeFilter === 'ALL' || typeFilter === 'INTERVIEW')) {
                             allEvents.push({
                                 studentId: studentId, 
@@ -1077,7 +1036,6 @@
                             });
                         }
 
-                        // 실기일 이벤트 (노란색/호박색 🟡)
                         if (practicalDateFormatted && (typeFilter === 'ALL' || typeFilter === 'PRACTICAL')) {
                             allEvents.push({
                                 studentId: studentId, 
@@ -1093,7 +1051,6 @@
                             });
                         }
 
-                        // 서류제출 이벤트 (청록색 📄)
                         if (docDateFormatted && (typeFilter === 'ALL' || typeFilter === 'DOC')) {
                             allEvents.push({
                                 studentId: studentId, 
@@ -1109,7 +1066,6 @@
                             });
                         }
 
-                        // 합격발표 이벤트 (분홍색 🎉)
                         if (passDateFormatted && (typeFilter === 'ALL' || typeFilter === 'PASS')) {
                             allEvents.push({
                                 studentId: studentId, 
