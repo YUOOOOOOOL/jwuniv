@@ -410,9 +410,9 @@
 
     <script>
         // -------------------------------------------------------------
-        // ★ 3단계에서 복사한 구글 앱스 스크립트 웹 앱 URL을 아래에 붙여넣으세요! ★
+        // ★ 구글 앱스 스크립트 웹 앱 URL ★
         // -------------------------------------------------------------
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPKrD-VD-qDvHJt4kA2Dxk-2Xpk9A3oxUSE-wT4deopNz6JV5dPqNA4hSXWrVmvzHgrw/exec"
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxcDbi1FWv5dHXykqhWBqQqEyMKO4waDccb7fuGQ69ZLigYw2PAkqEKKOOBh3oVD_TPA/exec";
 
         const POSTIT_COLORS = [
             { bg: 'bg-amber-50/90', border: 'border-amber-200', text: 'text-amber-900', badge: 'bg-amber-200/70 text-amber-900' },
@@ -427,6 +427,36 @@
         let usersData = JSON.parse(localStorage.getItem('susi_app_users')) || {};
         let cardsData = []; 
         let globalAllData = null; // 달력용 구글 시트 전체 데이터 저장용
+
+        /**
+         * 어떤 날짜 형태(구글 시트 Date 객체 문자열, ISO 포맷 등)라도 YYYY-MM-DD 형식으로 정규화하는 헬퍼 함수
+         */
+        function formatDateToYYYYMMDD(val) {
+            if (!val) return '';
+            if (typeof val !== 'string') val = String(val);
+            val = val.trim();
+            if (!val) return '';
+
+            // 1) 이미 YYYY-MM-DD 또는 YYYY-MM-DDTHH:mm:ss 로 시작하는 경우
+            const ymdMatch = val.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+            if (ymdMatch) {
+                const year = ymdMatch[1];
+                const month = String(ymdMatch[2]).padStart(2, '0');
+                const day = String(ymdMatch[3]).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            // 2) JS Date 객체 파싱 시도 (예: Tue Sep 29 2026 00:00:00 GMT+0900 ...)
+            const parsedDate = new Date(val);
+            if (!isNaN(parsedDate.getTime())) {
+                const year = parsedDate.getFullYear();
+                const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(parsedDate.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            return val;
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = sessionStorage.getItem('susi_current_user');
@@ -491,7 +521,6 @@
             submitBtn.innerHTML = `<div class="spinner"></div> <span>처리 중...</span>`;
             submitBtn.disabled = true;
 
-            // 구글 시트 DB 연동 모드
             if (GOOGLE_SCRIPT_URL) {
                 const res = await callGoogleAPI({ action: 'signup', id, name, pw });
                 submitBtn.innerHTML = `<span>회원가입 완료 🍉</span>`;
@@ -503,7 +532,6 @@
                     return;
                 }
             } else {
-                // LocalStorage 모드
                 if (usersData[id]) {
                     msg.className = "text-xs text-center mt-3 font-semibold text-pink-600";
                     msg.innerText = '이미 가입된 학번입니다.';
@@ -581,7 +609,7 @@
             document.getElementById('main-app').classList.add('flex');
             document.getElementById('bottom-banner').classList.remove('hidden');
 
-            const user = usersData[currentUser];
+            const user = usersData[currentUser] || { id: currentUser, name: '' };
             document.getElementById('user-display-info').innerText = `${user.id} ${user.name || ''}`;
 
             await loadUserCards();
@@ -592,14 +620,24 @@
             if (GOOGLE_SCRIPT_URL) {
                 const res = await callGoogleAPI({ action: 'getCards', studentId: currentUser });
                 if (res && res.success && res.cards) {
-                    cardsData = res.cards;
+                    cardsData = res.cards.map(c => ({
+                        ...c,
+                        interviewDate: formatDateToYYYYMMDD(c.interviewDate),
+                        docDate: formatDateToYYYYMMDD(c.docDate),
+                        passDate: formatDateToYYYYMMDD(c.passDate)
+                    }));
                     return;
                 }
             }
             // LocalStorage Fallback
             const saved = localStorage.getItem(`susi_cards_${currentUser}`);
             if (saved) {
-                cardsData = JSON.parse(saved);
+                cardsData = JSON.parse(saved).map(c => ({
+                    ...c,
+                    interviewDate: formatDateToYYYYMMDD(c.interviewDate),
+                    docDate: formatDateToYYYYMMDD(c.docDate),
+                    passDate: formatDateToYYYYMMDD(c.passDate)
+                }));
             } else {
                 cardsData = Array.from({ length: 12 }, (_, i) => ({
                     id: i + 1, university: '', department: '', type: '',
@@ -645,15 +683,15 @@
                             <div class="bg-white/60 p-2 rounded-xl border border-white/80 space-y-1.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[11px] text-purple-900 font-bold shrink-0 w-20">🗣️ 면접/실기:</span>
-                                    <input type="date" value="${card.interviewDate || ''}" onchange="updateCardField(${card.id}, 'interviewDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                    <input type="date" value="${formatDateToYYYYMMDD(card.interviewDate)}" onchange="updateCardField(${card.id}, 'interviewDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[11px] text-teal-900 font-bold shrink-0 w-20">📄 서류제출:</span>
-                                    <input type="date" value="${card.docDate || ''}" onchange="updateCardField(${card.id}, 'docDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                    <input type="date" value="${formatDateToYYYYMMDD(card.docDate)}" onchange="updateCardField(${card.id}, 'docDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[11px] text-pink-900 font-bold shrink-0 w-20">🎉 합격발표:</span>
-                                    <input type="date" value="${card.passDate || ''}" onchange="updateCardField(${card.id}, 'passDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                    <input type="date" value="${formatDateToYYYYMMDD(card.passDate)}" onchange="updateCardField(${card.id}, 'passDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
                                 </div>
                             </div>
 
@@ -749,7 +787,6 @@
                 document.getElementById('calendar-auth-view').classList.add('hidden');
                 document.getElementById('calendar-content-view').classList.remove('hidden');
 
-                // 구글 DB 전체 데이터 로드
                 if (GOOGLE_SCRIPT_URL) {
                     msg.className = "text-xs text-purple-600 mt-2 font-semibold";
                     msg.innerText = '구글 시트에서 전체 학급 일정을 불러오는 중입니다...';
@@ -826,7 +863,9 @@
                 
                 if (classFilter !== 'ALL' && classInfo.code !== classFilter) return;
 
-                const student = dataSourceUsers[studentId];
+                const student = dataSourceUsers[studentId] || {};
+                const studentName = student.name || student.studentName || '';
+
                 let studentCards = [];
 
                 if (GOOGLE_SCRIPT_URL && globalAllData && globalAllData.cards) {
@@ -838,31 +877,52 @@
                 studentCards.forEach(card => {
                     if (card.university || card.department) {
                         const uniDept = `${card.university || '미정'} ${card.department || ''}`.trim();
+                        const cardType = card.type || '미기재 전형';
 
-                        if (card.interviewDate && (typeFilter === 'ALL' || typeFilter === 'INTERVIEW')) {
+                        // 날짜 값을 YYYY-MM-DD 형식으로 확실하게 정규화
+                        const interviewDateFormatted = formatDateToYYYYMMDD(card.interviewDate);
+                        const docDateFormatted = formatDateToYYYYMMDD(card.docDate);
+                        const passDateFormatted = formatDateToYYYYMMDD(card.passDate);
+
+                        if (interviewDateFormatted && (typeFilter === 'ALL' || typeFilter === 'INTERVIEW')) {
                             allEvents.push({
-                                studentId: student.id, studentName: student.name,
-                                classLabel: classInfo.label, classCode: classInfo.code,
-                                universityInfo: uniDept, typeName: card.type || '미기재 전형',
-                                date: card.interviewDate, category: 'INTERVIEW', categoryLabel: '🗣️ 면접/실기',
+                                studentId: studentId, 
+                                studentName: studentName,
+                                classLabel: classInfo.label, 
+                                classCode: classInfo.code,
+                                universityInfo: uniDept, 
+                                typeName: cardType,
+                                date: interviewDateFormatted, 
+                                category: 'INTERVIEW', 
+                                categoryLabel: '🗣️ 면접/실기',
                                 badgeColor: 'bg-purple-100 text-purple-900 border-purple-200'
                             });
                         }
-                        if (card.docDate && (typeFilter === 'ALL' || typeFilter === 'DOC')) {
+                        if (docDateFormatted && (typeFilter === 'ALL' || typeFilter === 'DOC')) {
                             allEvents.push({
-                                studentId: student.id, studentName: student.name,
-                                classLabel: classInfo.label, classCode: classInfo.code,
-                                universityInfo: uniDept, typeName: card.type || '미기재 전형',
-                                date: card.docDate, category: 'DOC', categoryLabel: '📄 서류제출',
+                                studentId: studentId, 
+                                studentName: studentName,
+                                classLabel: classInfo.label, 
+                                classCode: classInfo.code,
+                                universityInfo: uniDept, 
+                                typeName: cardType,
+                                date: docDateFormatted, 
+                                category: 'DOC', 
+                                categoryLabel: '📄 서류제출',
                                 badgeColor: 'bg-teal-100 text-teal-900 border-teal-200'
                             });
                         }
-                        if (card.passDate && (typeFilter === 'ALL' || typeFilter === 'PASS')) {
+                        if (passDateFormatted && (typeFilter === 'ALL' || typeFilter === 'PASS')) {
                             allEvents.push({
-                                studentId: student.id, studentName: student.name,
-                                classLabel: classInfo.label, classCode: classInfo.code,
-                                universityInfo: uniDept, typeName: card.type || '미기재 전형',
-                                date: card.passDate, category: 'PASS', categoryLabel: '🎉 합격발표',
+                                studentId: studentId, 
+                                studentName: studentName,
+                                classLabel: classInfo.label, 
+                                classCode: classInfo.code,
+                                universityInfo: uniDept, 
+                                typeName: cardType,
+                                date: passDateFormatted, 
+                                category: 'PASS', 
+                                categoryLabel: '🎉 합격발표',
                                 badgeColor: 'bg-pink-100 text-pink-900 border-pink-200'
                             });
                         }
@@ -890,9 +950,13 @@
                 `;
 
                 dayEvents.forEach(ev => {
+                    // 표시할 이름 설정 (이름이 있으면 이름, 없으면 학번)
+                    const displayName = ev.studentName ? ev.studentName : ev.studentId;
+                    const uniShort = ev.universityInfo.split(' ')[0];
+
                     dayCellHtml += `
-                        <div class="${ev.badgeColor} px-1 py-0.5 rounded text-[9px] font-bold truncate border" title="[${ev.classLabel}] ${ev.studentName}: ${ev.universityInfo} (${ev.categoryLabel})">
-                            [${ev.classLabel}] ${ev.studentName ? ev.studentName.slice(-2) : '학생'}: ${ev.universityInfo.split(' ')[0]}
+                        <div class="${ev.badgeColor} px-1 py-0.5 rounded text-[9px] font-bold truncate border" title="[${ev.classLabel}] ${displayName}: ${ev.universityInfo} (${ev.categoryLabel})">
+                            [${ev.classLabel}] ${displayName}: ${uniShort}
                         </div>
                     `;
                 });
@@ -912,12 +976,14 @@
                 allEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
 
                 allEvents.forEach(ev => {
+                    const displayName = ev.studentName ? `${ev.studentId} ${ev.studentName}` : ev.studentId;
+
                     const eventItemHtml = `
                         <div class="p-2.5 rounded-xl border border-purple-100 bg-purple-50/30 hover:bg-purple-50/80 transition text-xs flex flex-col gap-1">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-1.5">
                                     <span class="bg-purple-200/80 text-purple-900 text-[10px] px-1.5 py-0.5 rounded-md font-extrabold">${ev.classLabel}</span>
-                                    <span class="font-bold text-purple-950">${ev.studentId} ${ev.studentName || ''}</span>
+                                    <span class="font-bold text-purple-950">${displayName}</span>
                                 </div>
                                 <span class="font-extrabold px-2 py-0.5 rounded-md text-[10px] border ${ev.badgeColor}">
                                     ${ev.categoryLabel}
