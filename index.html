@@ -248,7 +248,6 @@
             </div>
         </header>
 
-        <!-- 임시저장 경고 배너 추가 -->
         <div id="unsaved-warning" class="hidden mb-4 bg-orange-100 border border-orange-300 text-orange-800 px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -283,7 +282,6 @@
         </footer>
     </div>
 
-    <!-- 바텀 배너, 달력 모달 코드는 동일하게 유지... -->
     <div id="bottom-banner" class="fixed bottom-0 left-0 right-0 z-30 p-3 bg-white/90 backdrop-blur-md border-t border-purple-200 shadow-lg hidden">
         <div class="max-w-7xl mx-auto flex items-center justify-between px-2">
             <div class="flex items-center gap-2 text-xs md:text-sm text-purple-950 font-semibold">
@@ -318,11 +316,11 @@
                     <i class="fa-solid fa-user-lock"></i>
                 </div>
                 <h3 class="text-lg font-bold text-purple-950 mb-1">선생님 / 학급 관리자 인증</h3>
-                <p id="admin-pass-hint" class="text-xs text-gray-500 mb-4 max-w-xs">학급 전체 일정을 조회하기 위해 비밀번호를 입력해 주세요.<br>(기본 암호: <span class="font-mono font-bold text-purple-700">1234</span>)</p>
+                <p id="admin-pass-hint" class="text-xs text-gray-500 mb-4 max-w-xs">학급 전체 일정을 조회하기 위해 비밀번호를 입력해 주세요.<br>(최초 기본 암호: <span class="font-mono font-bold text-purple-700">1234</span>)</p>
                 <div class="flex gap-2 w-full max-w-xs">
                     <input type="password" id="admin-pass-input" placeholder="비밀번호 입력" class="flex-1 px-4 py-2 bg-gray-50 border border-purple-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium">
-                    <button onclick="verifyAdminPass()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl">
-                        확인
+                    <button id="admin-auth-btn" onclick="verifyAdminPass()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl flex items-center gap-1 min-w-[64px] justify-center transition-all">
+                        <span>확인</span>
                     </button>
                 </div>
                 <button onclick="toggleChangePassView()" class="text-xs text-purple-600 hover:underline font-semibold mt-3 flex items-center gap-1 mx-auto">
@@ -338,8 +336,8 @@
                         <label class="block text-[11px] font-bold text-purple-900 mb-1">새 비밀번호</label>
                         <input type="password" id="new-pass-input" placeholder="새 비밀번호 입력" class="w-full px-3 py-1.5 text-xs bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-400">
                     </div>
-                    <button onclick="handleUpdateAdminPass()" class="w-full py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition shadow-sm">
-                        비밀번호 저장
+                    <button id="update-pass-btn" onclick="handleUpdateAdminPass()" class="w-full py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                        <span>비밀번호 저장</span>
                     </button>
                 </div>
                 <p id="admin-auth-msg" class="text-xs text-red-500 mt-2 font-semibold min-h-[1rem]"></p>
@@ -416,6 +414,9 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOYRrmSPoBFz5JLXwk04cm3-_ejio_1sR_Bo7vpDDc6WCWzIT7v6VSdD75HNA7lvWMbw/exec";
+        
+        // 관리자용 동기화 시스템 계정 ID 설정
+        const ADMIN_SYS_CONFIG_ID = "ADMIN_SYS_CONFIG_000";
 
         const POSTIT_COLORS = [
             { bg: 'bg-amber-50/90', border: 'border-amber-200', text: 'text-amber-900', badge: 'bg-amber-200/70 text-amber-900' },
@@ -431,7 +432,7 @@
         let cardsData = []; 
         let globalAllData = null; 
         let activeCardTabs = {};  
-        let hasUnsavedChanges = false; // 변경사항 추적 변수 추가
+        let hasUnsavedChanges = false; 
 
         function formatDateToYYYYMMDD(val) {
             if (!val) return '';
@@ -538,8 +539,9 @@
             usersData[id] = { id, name, pw };
             localStorage.setItem('susi_app_users', JSON.stringify(usersData));
 
+            // [수정점] examType 속성을 명시적으로 초기화합니다.
             const initialCards = Array.from({ length: 12 }, (_, i) => ({
-                id: i + 1, university: '', department: '', type: '',
+                id: i + 1, university: '', department: '', type: '', examType: 'none',
                 interviewDate: '', practicalDate: '', docDate: '', passDate: '',
                 step1: '미발표', finalResult: '미발표', waitNum: '', teacherNote: ''
             }));
@@ -606,8 +608,6 @@
         }
 
         function handleLogout() {
-            // [버그 수정 3] 로그아웃 시 전역 변수 초기화 방지로 인한 데이터 꼬임 현상 해결
-            // 로그아웃 시 이전 사용자의 데이터를 메모리에서 명확하게 지워줍니다.
             if (hasUnsavedChanges) {
                 if (!confirm("저장하지 않은 데이터가 있습니다. 서버에 저장하지 않고 로그아웃 하시겠습니까?\n(취소 후 상단의 '서버에 저장하기' 버튼을 눌러주세요.)")) {
                     return;
@@ -643,18 +643,18 @@
         }
 
         async function loadUserCards() {
-            // [버그 수정 1] 서버 데이터를 덮어쓸 때 빈 값 처리를 명확히 함.
             if (GOOGLE_SCRIPT_URL) {
                 const res = await callGoogleAPI({ action: 'getCards', studentId: currentUser });
                 if (res && res.success && res.cards && res.cards.length > 0) {
                     cardsData = res.cards.map(c => ({
                         ...c,
+                        // [수정점] 서버에서 데이터를 받아올 때 examType도 복원합니다.
+                        examType: c.examType || '',
                         interviewDate: formatDateToYYYYMMDD(c.interviewDate),
                         practicalDate: formatDateToYYYYMMDD(c.practicalDate),
                         docDate: formatDateToYYYYMMDD(c.docDate),
                         passDate: formatDateToYYYYMMDD(c.passDate)
                     }));
-                    // 서버에서 성공적으로 로드했으므로 로컬 스토리지도 동기화해 둠
                     localStorage.setItem(`susi_cards_${currentUser}`, JSON.stringify(cardsData));
                     return;
                 }
@@ -664,6 +664,7 @@
             if (saved) {
                 cardsData = JSON.parse(saved).map(c => ({
                     ...c,
+                    examType: c.examType || '',
                     interviewDate: formatDateToYYYYMMDD(c.interviewDate),
                     practicalDate: formatDateToYYYYMMDD(c.practicalDate),
                     docDate: formatDateToYYYYMMDD(c.docDate),
@@ -671,7 +672,7 @@
                 }));
             } else {
                 cardsData = Array.from({ length: 12 }, (_, i) => ({
-                    id: i + 1, university: '', department: '', type: '',
+                    id: i + 1, university: '', department: '', type: '', examType: 'none',
                     interviewDate: '', practicalDate: '', docDate: '', passDate: '',
                     step1: '미발표', finalResult: '미발표', waitNum: '', teacherNote: ''
                 }));
@@ -681,24 +682,17 @@
         function switchCardTab(cardId, tabType) {
             activeCardTabs[cardId] = tabType;
             
-            // [버그 수정 2] 탭 변경 시 기존 데이터 자동 삭제 방지 
-            // 탭을 눌러 확인만 하려다 작성했던 날짜 데이터가 백지화되어 '다 사라졌다'고 느끼는 현상을 수정했습니다.
-            /* 
-             * 아래 주석 처리된 코드가 기존에 날짜를 삭제하던 치명적 오류였습니다. 
-             * 사용자가 면접 탭을 누르면 실기 날짜를 지워버리는 로직을 제거하여 데이터를 보존합니다.
+            // [수정점] 사용자가 선택한 탭(실기/면접) 상태를 카드의 examType에 명시적으로 저장합니다.
+            // 이렇게 해야 날짜가 없어도, 또는 서버에서 재배열될 때 실기 탭이 초기화되는 오류를 완벽히 막을 수 있습니다.
             const targetCard = cardsData.find(c => c.id === cardId);
             if (targetCard) {
-                if (tabType === 'none') {
-                    targetCard.interviewDate = '';
-                    targetCard.practicalDate = '';
-                } else if (tabType === 'interview') {
-                    targetCard.practicalDate = ''; 
-                } else if (tabType === 'practical') {
-                    targetCard.interviewDate = ''; 
-                }
+                targetCard.examType = tabType;
                 syncLocalAndGlobal();
+                
+                hasUnsavedChanges = true;
+                document.getElementById('unsaved-warning').classList.remove('hidden');
+                document.getElementById('unsaved-dot').classList.remove('hidden');
             }
-            */
 
             const interviewBox = document.getElementById(`card-${cardId}-tab-interview`);
             const practicalBox = document.getElementById(`card-${cardId}-tab-practical`);
@@ -745,10 +739,17 @@
                 const colorScheme = POSTIT_COLORS[index % POSTIT_COLORS.length];
                 const cardLabel = isFourYear ? `4년제 ${index + 1}번` : `전문대 ${index - 5}번`;
 
+                // [수정점] 탭 렌더링 시 명시적으로 저장된 examType을 최우선으로 불러옵니다.
                 if (!activeCardTabs[card.id]) {
-                    if (card.interviewDate) activeCardTabs[card.id] = 'interview';
-                    else if (card.practicalDate) activeCardTabs[card.id] = 'practical';
-                    else activeCardTabs[card.id] = 'none';
+                    if (card.examType) {
+                        activeCardTabs[card.id] = card.examType;
+                    } else if (card.interviewDate) {
+                        activeCardTabs[card.id] = 'interview';
+                    } else if (card.practicalDate) {
+                        activeCardTabs[card.id] = 'practical';
+                    } else {
+                        activeCardTabs[card.id] = 'none';
+                    }
                 }
 
                 const currentTab = activeCardTabs[card.id];
@@ -887,7 +888,6 @@
 
                 syncLocalAndGlobal();
 
-                // UI로 미저장 상태 안내 표시 활성화
                 hasUnsavedChanges = true;
                 document.getElementById('unsaved-warning').classList.remove('hidden');
                 document.getElementById('unsaved-dot').classList.remove('hidden');
@@ -919,7 +919,6 @@
 
             const msgBox = document.createElement('div');
             if(isSuccess) {
-                // 성공 시 UI 초기화
                 hasUnsavedChanges = false;
                 document.getElementById('unsaved-warning').classList.add('hidden');
                 document.getElementById('unsaved-dot').classList.add('hidden');
@@ -947,15 +946,38 @@
             document.getElementById('calendar-modal').classList.add('hidden');
         }
 
-        function getStoredAdminPass() {
-            return localStorage.getItem('susi_admin_pass') || '1234';
-        }
-
+        // [수정점] 브라우저 간 비밀번호 동기화를 위해 서버의 시스템 가상 계정을 확인합니다.
         async function verifyAdminPass() {
             const pass = document.getElementById('admin-pass-input').value;
             const msg = document.getElementById('admin-auth-msg');
+            const btn = document.getElementById('admin-auth-btn');
 
-            if (pass === getStoredAdminPass()) {
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = `<div class="spinner"></div>`;
+            btn.disabled = true;
+
+            let realPass = '1234'; // 기본값
+
+            // 서버에서 글로벌 비밀번호 체크 (브라우저 달라도 연동)
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    const res = await callGoogleAPI({ action: 'getCards', studentId: ADMIN_SYS_CONFIG_ID });
+                    if (res && res.success && res.cards && res.cards[0] && res.cards[0].teacherNote) {
+                        realPass = res.cards[0].teacherNote; // 시스템 설정값
+                    }
+                } catch(e) { console.log('Admin pass sync error'); }
+            }
+
+            // 서버 비밀번호가 기본값(1234)인데 기기 자체 로컬 비밀번호가 있다면 로컬 적용
+            const localPass = localStorage.getItem('susi_admin_pass');
+            if (localPass && localPass !== '1234' && realPass === '1234') {
+                realPass = localPass;
+            }
+
+            btn.innerHTML = originalBtnText;
+            btn.disabled = false;
+
+            if (pass === realPass) {
                 document.getElementById('calendar-auth-view').classList.add('hidden');
                 document.getElementById('calendar-content-view').classList.remove('hidden');
 
@@ -980,31 +1002,72 @@
             document.getElementById('change-pass-box').classList.toggle('hidden');
         }
 
-        function handleUpdateAdminPass() {
+        // [수정점] 변경된 비밀번호를 시스템 가상 계정에 저장하여 모든 브라우저에 동기화합니다.
+        async function handleUpdateAdminPass() {
             const curPass = document.getElementById('cur-pass-input').value;
             const newPass = document.getElementById('new-pass-input').value;
             const msg = document.getElementById('admin-auth-msg');
+            const btn = document.getElementById('update-pass-btn');
 
-            if (curPass !== getStoredAdminPass()) {
-                msg.className = "text-xs text-red-500 mt-2 font-semibold min-h-[1rem]";
-                msg.innerText = '현재 비밀번호가 일치하지 않습니다.';
-                return;
-            }
             if (!newPass.trim()) {
                 msg.className = "text-xs text-red-500 mt-2 font-semibold min-h-[1rem]";
                 msg.innerText = '새 비밀번호를 입력해 주세요.';
                 return;
             }
 
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = `<div class="spinner"></div> <span>비밀번호 검증 중...</span>`;
+            btn.disabled = true;
+
+            let realPass = '1234';
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    const res = await callGoogleAPI({ action: 'getCards', studentId: ADMIN_SYS_CONFIG_ID });
+                    if (res && res.success && res.cards && res.cards[0] && res.cards[0].teacherNote) {
+                        realPass = res.cards[0].teacherNote;
+                    }
+                } catch(e) {}
+            }
+            const localPass = localStorage.getItem('susi_admin_pass');
+            if (localPass && localPass !== '1234' && realPass === '1234') {
+                realPass = localPass;
+            }
+
+            if (curPass !== realPass) {
+                msg.className = "text-xs text-red-500 mt-2 font-semibold min-h-[1rem]";
+                msg.innerText = '현재 비밀번호가 일치하지 않습니다.';
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+                return;
+            }
+
+            msg.className = "text-xs text-purple-600 mt-2 font-semibold min-h-[1rem]";
+            msg.innerText = '서버에 새 비밀번호를 동기화 중입니다...';
+
             localStorage.setItem('susi_admin_pass', newPass.trim());
+
+            if (GOOGLE_SCRIPT_URL) {
+                // 더미(시스템 구성용) 카드를 서버에 저장
+                const dummyCards = Array.from({ length: 12 }, (_, i) => ({
+                    id: i + 1, university: '', department: '', type: '', examType: 'none',
+                    interviewDate: '', practicalDate: '', docDate: '', passDate: '',
+                    step1: '미발표', finalResult: '미발표', waitNum: '', teacherNote: i === 0 ? newPass.trim() : ''
+                }));
+                await callGoogleAPI({ action: 'saveCards', studentId: ADMIN_SYS_CONFIG_ID, cards: dummyCards });
+            }
+
+            btn.innerHTML = originalBtnText;
+            btn.disabled = false;
+
             msg.className = "text-xs text-emerald-600 mt-2 font-semibold min-h-[1rem]";
-            msg.innerText = '선생님 비밀번호가 변경되었습니다! 🍉';
+            msg.innerText = '선생님 비밀번호가 모든 기기에 적용되도록 변경되었습니다! 🍉';
             document.getElementById('cur-pass-input').value = '';
             document.getElementById('new-pass-input').value = '';
             
             setTimeout(() => {
                 document.getElementById('change-pass-box').classList.add('hidden');
-            }, 1500);
+                msg.innerText = '';
+            }, 2500);
         }
 
         function getClassInfo(studentId) {
@@ -1037,6 +1100,9 @@
             }
 
             Object.keys(dataSourceUsers).forEach(studentId => {
+                // 시스템 가상 계정은 캘린더에서 무시합니다.
+                if(studentId === ADMIN_SYS_CONFIG_ID) return;
+
                 const classInfo = getClassInfo(studentId);
                 if (classFilter !== 'ALL' && classInfo.code !== classFilter) return;
 
@@ -1062,20 +1128,26 @@
                         const docDateFormatted = formatDateToYYYYMMDD(card.docDate);
                         const passDateFormatted = formatDateToYYYYMMDD(card.passDate);
 
-                        if (interviewDateFormatted && (typeFilter === 'ALL' || typeFilter === 'INTERVIEW')) {
+                        // [수정점] 사용자가 '선택한 탭 상태'를 기준으로만 캘린더에 표시합니다.
+                        // (면접 탭을 실기 탭으로 변경 시, 과거 면접날짜가 유령처럼 캘린더에 뜨는 오류 방지)
+                        const activeExamTab = card.examType || (card.interviewDate ? 'interview' : (card.practicalDate ? 'practical' : 'none'));
+
+                        if (activeExamTab === 'interview' && interviewDateFormatted && (typeFilter === 'ALL' || typeFilter === 'INTERVIEW')) {
                             allEvents.push({
                                 studentId: studentId, studentName: studentName, classLabel: classInfo.label, classCode: classInfo.code,
                                 universityInfo: uniDept, typeName: cardType, date: interviewDateFormatted, 
                                 category: 'INTERVIEW', categoryLabel: '🗣️ 면접일', badgeColor: 'bg-purple-100 text-purple-900 border-purple-300'
                             });
                         }
-                        if (practicalDateFormatted && (typeFilter === 'ALL' || typeFilter === 'PRACTICAL')) {
+                        if (activeExamTab === 'practical' && practicalDateFormatted && (typeFilter === 'ALL' || typeFilter === 'PRACTICAL')) {
                             allEvents.push({
                                 studentId: studentId, studentName: studentName, classLabel: classInfo.label, classCode: classInfo.code,
                                 universityInfo: uniDept, typeName: cardType, date: practicalDateFormatted, 
                                 category: 'PRACTICAL', categoryLabel: '🎨 실기일', badgeColor: 'bg-amber-200 text-amber-950 border-amber-400 font-extrabold'
                             });
                         }
+
+                        // 서류/발표일은 탭과 관계없이 모두 표시
                         if (docDateFormatted && (typeFilter === 'ALL' || typeFilter === 'DOC')) {
                             allEvents.push({
                                 studentId: studentId, studentName: studentName, classLabel: classInfo.label, classCode: classInfo.code,
@@ -1168,3 +1240,4 @@
     </script>
 </body>
 </html>
+```eof
