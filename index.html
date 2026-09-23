@@ -231,7 +231,7 @@
             <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="space-y-3.5 hidden">
                 <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-[11px] text-indigo-900 font-medium leading-relaxed">
                     👩‍🏫 담임선생님 전용 화면입니다.<br>
-                    학급별 학생 계정·비밀번호, 수시카드, 대학별고사, 합격자 발표 현황을 확인하고 나이스 파일로 학생을 일괄 등록할 수 있어요.
+                    학급별 학생 계정·비밀번호, 수시카드, 대학별고사, 합격자 발표 현황을 확인하고 대교협·나이스 파일로 학생을 일괄 등록할 수 있어요.
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-purple-900 mb-1">관리자 비밀번호 (학급 달력 비밀번호와 동일)</label>
@@ -412,7 +412,7 @@
         </footer>
     </div>
 
-    <!-- [추가] 나이스 파일 일괄 등록 모달 -->
+    <!-- [추가] 대교협·나이스 파일 일괄 등록 모달 -->
     <div id="import-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/40 backdrop-blur-sm hidden">
         <div class="glass-card w-full max-w-6xl max-h-[94vh] rounded-3xl p-5 md:p-7 flex flex-col relative overflow-hidden bg-white/95">
             <div class="flex items-center justify-between pb-3 border-b border-purple-100">
@@ -431,15 +431,32 @@
             <div class="flex-grow overflow-y-auto pt-4 pr-1">
                 <!-- STEP 1 -->
                 <div id="import-step1">
-                    <div class="bg-purple-50/80 border border-purple-200 rounded-2xl p-4 text-xs text-purple-950 leading-relaxed mb-4">
-                        <p class="font-bold mb-1">📋 이렇게 사용하세요</p>
-                        <p>① 두 가지 파일을 모두 넣을 수 있어요. (여러 반 파일은 한 반씩 차례로 넣으면 돼요)<br>
-                           &nbsp;&nbsp;· <b>대교협 '수시진학관리' 엑셀</b> — 전형명·학과가 정확하고 <b>면접·논술·실기일, 최종발표일</b>까지 자동으로 채워져요. <span class="text-emerald-700 font-bold">(추천)</span><br>
-                           &nbsp;&nbsp;· 나이스 <b>[대입전형자료 → 제공현황조회 → 제공현황진행상황조회 → 반별]</b> 엑셀 — 대학·전형만 채워져요.</p>
-                        <p>② 아직 가입하지 않은 학생은 <b>자동 가입</b>돼요. (아이디 = 학번, 비밀번호 = 자동 생성)</p>
-                        <p>③ 이미 가입한 학생은 <b>비밀번호를 그대로 둔 채 빈 카드에만</b> 지원 내역이 채워져요. 학생이 쓴 카드는 절대 덮어쓰지 않아요.</p>
-                        <p>④ '재요청' 줄처럼 같은 수험번호가 여러 번 나오면 한 번만 넣고, 학생 카드에 이미 같은 대학이 있으면 넣지 않아요.</p>
-                        <p>⑤ 나이스의 <b>평가단위명</b>(예: 지역균형전형-경제학과-수시)을 <b>전형명 / 학과</b>로 자동으로 나눠서 넣어요. 미리보기에서 고칠 수 있어요.</p>
+                    <p class="text-xs font-bold text-purple-950 mb-2">📋 두 가지 파일 중 하나를 넣어주세요 <span class="text-gray-400 font-medium">(파일 모양을 보고 자동으로 알아봐요 · 여러 반은 한 반씩 차례로)</span></p>
+                    <div class="grid md:grid-cols-2 gap-3 mb-3">
+                        <div class="bg-white border-2 border-emerald-300 rounded-2xl p-4 text-xs text-gray-800 leading-relaxed">
+                            <p class="font-extrabold text-emerald-800 text-sm mb-1">🏫 대교협 '수시진학관리' 파일 <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">추천</span></p>
+                            <p>✅ 학생 자동 가입 + 수시 카드 입력</p>
+                            <p>✅ 전형명·학과가 정확하게 들어가요</p>
+                            <p>✅ <b>면접·논술·실기일, 최종 합격발표일</b>까지 등록돼요</p>
+                            <p>✅ 나중에 결과를 올리고 다시 받으면 <b>1단계·최종 결과</b>도 채워져요</p>
+                            <div class="mt-2 bg-red-50 border border-red-200 rounded-lg p-2 text-[11px] text-red-700 font-bold">
+                                ⚠️ 학생이 이미 적어 둔 날짜가 있으면 <u>학생 날짜를 먼저 남기고</u>, 대교협 날짜와 다르면 빨간색으로 표시해요.<br>
+                                (대교협에는 모든 학과가 올라가지 않거나 잘못 올라가는 경우가 있어서)
+                            </div>
+                        </div>
+                        <div class="bg-white border border-purple-200 rounded-2xl p-4 text-xs text-gray-800 leading-relaxed">
+                            <p class="font-extrabold text-purple-800 text-sm mb-1">📂 나이스 '제공현황진행상황(반별)' 파일</p>
+                            <p class="text-[10.5px] text-gray-500 mb-1">대입전형자료 → 제공현황조회 → 제공현황진행상황조회 → 반별</p>
+                            <p>✅ 학생 자동 가입 + 수시 카드 입력</p>
+                            <p>✅ 평가단위명을 전형명·학과로 자동으로 나눠서 넣어요</p>
+                            <p>❌ <b>면접일·합격자 발표 일정은 등록되지 않아요</b></p>
+                            <p class="text-[11px] text-purple-700 font-semibold mt-1">→ 일정은 나중에 대교협 파일을 넣거나 [면접일 자동 채우기]로 채울 수 있어요</p>
+                        </div>
+                    </div>
+                    <div class="bg-purple-50/80 border border-purple-200 rounded-2xl p-3 text-[11px] text-purple-950 leading-relaxed mb-4">
+                        <p>· 아이디 = <b>학번</b>, 비밀번호 = <b>자동 생성</b> (이미 가입한 학생은 비밀번호 그대로)</p>
+                        <p>· 학생이 쓴 카드는 <b>절대 덮어쓰지 않고 빈칸에만</b> 채워요. 같은 대학이 이미 카드에 있으면 새로 넣지 않아요.</p>
+                        <p>· '재요청' 줄처럼 같은 지원이 여러 번 나오면 한 번만 넣어요.</p>
                     </div>
                     <label class="block border-2 border-dashed border-purple-300 hover:border-purple-500 bg-white rounded-2xl p-8 text-center cursor-pointer transition">
                         <i class="fa-solid fa-file-arrow-up text-4xl text-purple-400 mb-2"></i>
@@ -1960,7 +1977,7 @@
                 if (info && info.success === false && info.message) reason = `<br>· 서버 응답: ${escapeHtml(info.message)}`;
                 if (info && info.sheets) reason += `<br>· 시트 목록: ${escapeHtml(info.sheets.map(x => `${x.name}[${(x.headers || []).join(', ')}]`).join(' / '))}`;
                 notice.innerHTML = `⚠️ 비밀번호 '확인 불가' 학생 ${unknownPw}명 — 학생이 직접 가입한 비밀번호는 구글 시트 서버(Apps Script)가 보내줘야 보여요.<br>
-                    → 함께 드린 <b>Apps Script 추가코드</b>를 붙이고 '새 버전'으로 배포하면 바로 보입니다. (나이스 일괄 등록으로 자동 가입한 학생은 추가코드 없이도 보여요)${reason}`;
+                    → Apps Script(Code.gs)를 최신 코드로 바꾸고 '새 버전'으로 배포했는지 확인해 주세요. (일괄 등록으로 자동 가입한 학생은 그래도 보여요)${reason}`;
             } else notice.classList.add('hidden');
 
             document.getElementById('print-slips-btn').classList.toggle('hidden', adminTab !== 'accounts');
