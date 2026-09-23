@@ -11,6 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- [추가] 나이스 엑셀 파일(xlsx/xls/csv) 읽기 + 엑셀 내보내기용 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -118,6 +121,25 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .spinner-dark {
+            border: 3px solid rgba(124, 58, 237, 0.2);
+            border-top: 3px solid #7c3aed;
+        }
+
+        /* ===== [추가] 관리자 화면 표 스타일 ===== */
+        .admin-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.75rem; }
+        .admin-table th {
+            position: sticky; top: 0; z-index: 2;
+            background: #f5f3ff; color: #3b0764; font-weight: 800;
+            padding: 8px 10px; text-align: left; white-space: nowrap;
+            border-bottom: 2px solid #ddd6fe;
+        }
+        .admin-table td { padding: 7px 10px; border-bottom: 1px solid #f1f0f5; vertical-align: top; }
+        .admin-table tr.student-first td { border-top: 2px solid #ede9fe; }
+        .admin-table tbody tr:hover td { background: #faf5ff; }
+        .admin-tab-btn { transition: all .15s; }
+        .admin-tab-btn.active { background: #7c3aed; color: #fff; box-shadow: 0 2px 8px rgba(124,58,237,.3); }
+        .pw-mask { letter-spacing: 2px; }
     </style>
 </head>
 <body class="p-3 md:p-6 text-gray-800 flex flex-col min-h-screen font-sans">
@@ -205,7 +227,33 @@
                 </button>
             </form>
             
+            <!-- [추가] 선생님(관리자) 로그인 폼 -->
+            <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="space-y-3.5 hidden">
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-[11px] text-indigo-900 font-medium leading-relaxed">
+                    👩‍🏫 담임선생님 전용 화면입니다.<br>
+                    학급별 학생 계정·비밀번호, 수시카드, 대학별고사, 합격자 발표 현황을 확인하고 나이스 파일로 학생을 일괄 등록할 수 있어요.
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-purple-900 mb-1">관리자 비밀번호 (학급 달력 비밀번호와 동일)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user-shield absolute left-3 top-3 text-indigo-400 text-sm"></i>
+                        <input type="password" id="admin-login-pw" required placeholder="관리자 비밀번호" class="w-full pl-9 pr-3 py-2.5 bg-white/90 border border-indigo-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    </div>
+                </div>
+                <button type="submit" id="admin-login-btn" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
+                    <span>관리자 화면 열기</span>
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </button>
+                <button type="button" onclick="switchAuthTab('login')" class="w-full text-xs text-purple-700 hover:underline font-semibold">← 학생 로그인으로 돌아가기</button>
+            </form>
+
             <p id="auth-msg" class="text-xs text-center mt-3 font-semibold text-pink-600 min-h-[1rem]"></p>
+
+            <div id="admin-entry-link" class="text-center pt-3 mt-1 border-t border-purple-100">
+                <button type="button" onclick="switchAuthTab('admin')" class="text-[11px] text-indigo-700 hover:text-indigo-900 font-bold inline-flex items-center gap-1">
+                    <i class="fa-solid fa-chalkboard-user"></i> 선생님(관리자) 로그인
+                </button>
+            </div>
         </div>
 
         <footer class="text-center text-xs text-purple-950/70 font-medium py-2">
@@ -242,11 +290,22 @@
                       <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                     </span>
                 </button>
-                <button onclick="handleLogout()" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs md:text-sm font-semibold rounded-xl transition">
+                <button id="logout-btn" onclick="handleLogout()" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs md:text-sm font-semibold rounded-xl transition">
                     로그아웃
                 </button>
             </div>
         </header>
+
+        <!-- [추가] 선생님이 관리자 화면에서 학생 카드를 열었을 때 표시 -->
+        <div id="teacher-view-banner" class="hidden mb-4 bg-indigo-100 border border-indigo-300 text-indigo-900 px-4 py-2.5 rounded-xl text-xs font-bold flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-chalkboard-user"></i>
+                <span>선생님(관리자) 모드로 <b id="teacher-view-student"></b> 학생의 카드를 보고 있습니다. 메모 작성 후 [서버에 저장하기]를 눌러주세요.</span>
+            </div>
+            <button onclick="returnToAdmin()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                <i class="fa-solid fa-arrow-left"></i> 관리자 화면으로
+            </button>
+        </div>
 
         <div id="unsaved-warning" class="hidden mb-4 bg-orange-100 border border-orange-300 text-orange-800 px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -282,6 +341,181 @@
         </footer>
     </div>
 
+    <!-- ===================================================== -->
+    <!-- [추가] 선생님(관리자) 화면                               -->
+    <!-- ===================================================== -->
+    <div id="admin-app" class="hidden flex-col max-w-7xl mx-auto w-full flex-grow pb-10">
+        <header class="glass-card rounded-2xl p-4 md:p-5 mb-4 flex flex-col md:flex-row items-center justify-between gap-4 border border-white/80">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl shadow-sm">👩‍🏫</div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold text-purple-950 tracking-tight">수시대박 관리자 화면 🍉</h1>
+                    <p class="text-xs md:text-sm text-purple-700 mt-0.5">학급별 학생 계정 · 수시카드 · 대학별고사 · 합격자 발표</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+                <button onclick="openImportModal()" class="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs md:text-sm font-bold rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-import"></i><span>나이스 파일로 일괄 등록</span>
+                </button>
+                <button onclick="openCalendarFromAdmin()" class="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs md:text-sm font-bold rounded-xl shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-days text-yellow-300"></i><span>학급 수시 달력</span>
+                </button>
+                <button id="admin-refresh-btn" onclick="loadAdminData()" class="px-3 py-2 bg-white hover:bg-purple-50 border border-purple-200 text-purple-800 text-xs md:text-sm font-bold rounded-xl transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate"></i><span>새로고침</span>
+                </button>
+                <button onclick="handleAdminLogout()" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs md:text-sm font-semibold rounded-xl transition">로그아웃</button>
+            </div>
+        </header>
+
+        <div id="admin-pw-notice" class="hidden mb-3 bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2.5 rounded-xl text-[11px] font-semibold leading-relaxed"></div>
+
+        <div class="glass-card rounded-2xl p-3 md:p-4 mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold text-purple-900">🏫 반 선택:</span>
+                <select id="admin-class-filter" onchange="renderAdminView()" class="bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                    <option value="ALL">전체 반</option>
+                </select>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-purple-300 text-xs"></i>
+                    <input id="admin-search" oninput="renderAdminView()" placeholder="학번·이름·대학 검색" class="pl-7 pr-2 py-1.5 bg-white border border-purple-200 rounded-lg text-xs w-44 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="printPasswordSlips()" id="print-slips-btn" class="px-3 py-1.5 bg-white border border-purple-200 hover:bg-purple-50 text-purple-800 text-xs font-bold rounded-lg transition hidden">
+                    <i class="fa-solid fa-print"></i> 비밀번호 안내쪽지 인쇄
+                </button>
+                <button onclick="exportAdminTab()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition">
+                    <i class="fa-solid fa-file-excel"></i> 현재 표 엑셀로 저장
+                </button>
+            </div>
+        </div>
+
+        <div id="admin-stats" class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3"></div>
+
+        <div class="flex flex-wrap gap-1.5 bg-white/70 p-1.5 rounded-2xl border border-purple-100 mb-3">
+            <button class="admin-tab-btn flex-1 min-w-[120px] px-3 py-2 rounded-xl text-xs font-bold text-purple-800 active" data-tab="accounts" onclick="switchAdminTab('accounts')">🔑 학생 계정·비밀번호</button>
+            <button class="admin-tab-btn flex-1 min-w-[120px] px-3 py-2 rounded-xl text-xs font-bold text-purple-800" data-tab="cards" onclick="switchAdminTab('cards')">📌 수시카드 목록</button>
+            <button class="admin-tab-btn flex-1 min-w-[120px] px-3 py-2 rounded-xl text-xs font-bold text-purple-800" data-tab="exams" onclick="switchAdminTab('exams')">🗣️ 대학별고사 (면접·실기·논술)</button>
+            <button class="admin-tab-btn flex-1 min-w-[120px] px-3 py-2 rounded-xl text-xs font-bold text-purple-800" data-tab="results" onclick="switchAdminTab('results')">🎉 합격자 발표</button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-2 md:p-3 flex-grow">
+            <div id="admin-tab-extra" class="mb-2"></div>
+            <div id="admin-table-wrap" class="overflow-auto max-h-[65vh] rounded-xl bg-white border border-purple-100"></div>
+        </div>
+
+        <footer class="text-center text-xs text-purple-950/70 font-medium py-4 mt-auto">
+            Copyright © 2026 이유리선생님. All rights reserved.
+        </footer>
+    </div>
+
+    <!-- [추가] 나이스 파일 일괄 등록 모달 -->
+    <div id="import-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/40 backdrop-blur-sm hidden">
+        <div class="glass-card w-full max-w-6xl max-h-[94vh] rounded-3xl p-5 md:p-7 flex flex-col relative overflow-hidden bg-white/95">
+            <div class="flex items-center justify-between pb-3 border-b border-purple-100">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">📥</span>
+                    <div>
+                        <h2 class="text-lg md:text-xl font-bold text-purple-950">나이스 '제공현황진행상황(반별)' 파일로 일괄 등록</h2>
+                        <p class="text-xs text-gray-500 font-medium">학생 계정 자동 생성 + 수시 지원 카드 자동 입력 (기존에 학생이 쓴 내용은 절대 덮어쓰지 않아요)</p>
+                    </div>
+                </div>
+                <button id="import-close-btn" onclick="closeImportModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto pt-4 pr-1">
+                <!-- STEP 1 -->
+                <div id="import-step1">
+                    <div class="bg-purple-50/80 border border-purple-200 rounded-2xl p-4 text-xs text-purple-950 leading-relaxed mb-4">
+                        <p class="font-bold mb-1">📋 이렇게 사용하세요</p>
+                        <p>① 나이스 <b>[대입전형자료 → 제공현황조회 → 제공현황진행상황조회 → 반별]</b>에서 엑셀로 내려받은 파일을 그대로 넣어주세요. (여러 반 파일은 한 반씩 차례로 넣으면 돼요)</p>
+                        <p>② 아직 가입하지 않은 학생은 <b>자동 가입</b>돼요. (아이디 = 학번, 비밀번호 = 자동 생성)</p>
+                        <p>③ 이미 가입한 학생은 <b>비밀번호를 그대로 둔 채 빈 카드에만</b> 지원 내역이 채워져요. 학생이 쓴 카드는 절대 덮어쓰지 않아요.</p>
+                        <p>④ '재요청' 줄처럼 같은 수험번호가 여러 번 나오면 한 번만 넣고, 학생 카드에 이미 같은 대학이 있으면 넣지 않아요.</p>
+                        <p>⑤ 나이스의 <b>평가단위명</b>(예: 지역균형전형-경제학과-수시)을 <b>전형명 / 학과</b>로 자동으로 나눠서 넣어요. 미리보기에서 고칠 수 있어요.</p>
+                    </div>
+                    <label class="block border-2 border-dashed border-purple-300 hover:border-purple-500 bg-white rounded-2xl p-8 text-center cursor-pointer transition">
+                        <i class="fa-solid fa-file-arrow-up text-4xl text-purple-400 mb-2"></i>
+                        <p class="text-sm font-bold text-purple-900">여기를 눌러 나이스 파일 선택</p>
+                        <p class="text-[11px] text-gray-500 mt-1">.xlsx · .xls · .csv</p>
+                        <input type="file" id="import-file" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleImportFile(event)">
+                    </label>
+                    <p id="import-file-msg" class="text-xs text-center mt-3 font-semibold text-pink-600 min-h-[1rem]"></p>
+                </div>
+
+                <!-- STEP 2 -->
+                <div id="import-step2" class="hidden space-y-4">
+                    <div class="bg-white border border-purple-100 rounded-2xl p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <p class="text-xs font-bold text-purple-950">① 열(칼럼) 확인 <span class="text-gray-400 font-medium">— 자동으로 찾았어요. 틀렸으면 바꿔주세요.</span></p>
+                            <span id="import-format-badge" class="text-[11px] font-bold"></span>
+                        </div>
+                        <div class="text-[11px] text-gray-500 mb-2">시트: <select id="import-sheet-select" onchange="onImportSheetChange()" class="border border-purple-200 rounded px-1 py-0.5"></select>
+                            &nbsp; 제목 줄: <select id="import-header-row" onchange="onImportHeaderChange()" class="border border-purple-200 rounded px-1 py-0.5"></select></div>
+                        <details class="mt-1"><summary class="text-[11px] text-purple-700 font-bold cursor-pointer">열 연결 자세히 보기 / 바꾸기</summary>
+                            <div id="import-mapping" class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2"></div>
+                        </details>
+                        <p class="text-[10px] text-gray-400 mt-2">※ 학번은 '계열/학년/학과(학년)·반·번호'로 만들어요. 예) 3학년 9반 1번 → 30901</p>
+                    </div>
+
+                    <div class="bg-white border border-purple-100 rounded-2xl p-4 grid md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs font-bold text-purple-950 mb-2">② 자동 가입 학생의 비밀번호 (아이디는 학번)</p>
+                            <div class="space-y-1.5 text-xs">
+                                <label class="flex items-center gap-2"><input type="radio" name="pw-rule" value="random4" checked onchange="buildImportPreview()"> 학생마다 다른 무작위 숫자 4자리 <span class="text-emerald-600 font-bold">(추천)</span></label>
+                                <label class="flex items-center gap-2"><input type="radio" name="pw-rule" value="studentId" onchange="buildImportPreview()"> 학번과 똑같이</label>
+                                <label class="flex items-center gap-2"><input type="radio" name="pw-rule" value="fixed" onchange="buildImportPreview()"> 모두 같은 비밀번호:
+                                    <input id="pw-fixed-value" value="1111" oninput="buildImportPreview()" class="border border-purple-200 rounded px-2 py-0.5 w-24"></label>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-2">※ 이미 가입한 학생의 비밀번호는 절대 바뀌지 않아요.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-purple-950 mb-2">③ 등록할 반</p>
+                            <select id="import-class-filter" onchange="buildImportPreview()" class="bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-purple-900"></select>
+                            <p class="text-[10px] text-gray-400 mt-2">※ 반 단위로 나눠서 등록하면 더 빠르고 안전해요. (학생 1명당 약 3~5초)</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-purple-100 rounded-2xl p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <p class="text-xs font-bold text-purple-950">④ 미리보기 <span class="text-gray-400 font-medium">— 구분·전형명·학과가 틀리면 바로 고칠 수 있어요. 체크를 풀면 제외돼요.</span></p>
+                            <span id="import-summary" class="text-[11px] font-bold text-purple-800 bg-purple-100 px-2.5 py-1 rounded-lg"></span>
+                        </div>
+                        <div id="import-preview" class="overflow-auto max-h-[48vh] border border-purple-100 rounded-xl"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2">
+                        <button onclick="resetImport()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl">← 다른 파일 선택</button>
+                        <button id="import-run-btn" onclick="runImport()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold rounded-xl shadow">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 등록 시작
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div id="import-step3" class="hidden space-y-4">
+                    <div class="bg-white border border-purple-100 rounded-2xl p-4">
+                        <div class="flex items-center justify-between text-xs font-bold text-purple-950 mb-2">
+                            <span id="import-progress-label">등록 중...</span>
+                            <span id="import-progress-count">0 / 0</span>
+                        </div>
+                        <div class="w-full h-3 bg-purple-100 rounded-full overflow-hidden">
+                            <div id="import-progress-bar" class="h-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all" style="width:0%"></div>
+                        </div>
+                        <p id="import-progress-warn" class="text-[11px] text-red-600 font-bold mt-2">⚠️ 등록이 끝날 때까지 이 창을 닫거나 새로고침하지 마세요.</p>
+                    </div>
+                    <div id="import-result" class="overflow-auto max-h-[45vh] border border-purple-100 rounded-xl bg-white"></div>
+                    <div id="import-done-actions" class="hidden flex flex-wrap items-center justify-end gap-2">
+                        <button onclick="downloadImportResult()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl"><i class="fa-solid fa-file-excel"></i> 결과(학번·비밀번호) 엑셀 저장</button>
+                        <button onclick="closeImportModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl">완료</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="bottom-banner" class="fixed bottom-0 left-0 right-0 z-30 p-3 bg-white/90 backdrop-blur-md border-t border-purple-200 shadow-lg hidden">
         <div class="max-w-7xl mx-auto flex items-center justify-between px-2">
             <div class="flex items-center gap-2 text-xs md:text-sm text-purple-950 font-semibold">
@@ -303,7 +537,7 @@
                     <span class="text-2xl">📅</span>
                     <div>
                         <h2 class="text-lg md:text-xl font-bold text-purple-950">정왕고등학교 수시 일정 통합 달력</h2>
-                        <p class="text-xs text-gray-500 font-medium">학급 전체 학생들의 면접(보라 🟣), 실기(노랑 🟡), 서류제출, 합격발표 일정</p>
+                        <p class="text-xs text-gray-500 font-medium">학급 전체 학생들의 면접(보라 🟣), 실기(노랑 🟡), 논술(주황 🟠), 서류제출, 합격발표 일정</p>
                     </div>
                 </div>
                 <button onclick="closeCalendarModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition">
@@ -377,6 +611,7 @@
                                 <option value="ALL">전체 일정 보기</option>
                                 <option value="INTERVIEW">🗣️ 면접일 (보라)</option>
                                 <option value="PRACTICAL">🎨 실기일 (노랑)</option>
+                                <option value="ESSAY">✍️ 논술일 (주황)</option>
                                 <option value="DOC">📄 서류제출</option>
                                 <option value="PASS">🎉 합격발표</option>
                             </select>
@@ -434,6 +669,19 @@
         let activeCardTabs = {};  
         let hasUnsavedChanges = false; 
 
+        // ===== [추가] 관리자 기능용 변수 =====
+        const ADMIN_PWBOOK_ID = "ADMIN_SYS_PWBOOK_000";   // 일괄 등록으로 만든 비밀번호를 모든 선생님 기기에서 보도록 저장하는 시스템 계정
+        let isAdminMode = false;
+        let teacherViewingId = null;          // 선생님이 관리자 화면에서 연 학생 학번
+        let cardsLoadedFromServer = false;
+        let adminPwBook = {};
+        let adminTab = 'accounts';
+        let adminShowPw = false;
+        let adminExport = { name: '', headers: [], rows: [] };
+        let adminPassCache = '';          // 관리자 로그인 비밀번호 (새로고침하면 사라짐)
+        let adminServerPw = {};           // Apps Script 'getPasswords' 로 받은 학생 비밀번호
+        let adminServerPwInfo = null;     // 비밀번호 불러오기 결과(진단용)
+
         function formatDateToYYYYMMDD(val) {
             if (!val) return '';
             if (typeof val !== 'string') val = String(val);
@@ -489,6 +737,22 @@
             const signupBtn = document.getElementById('tab-signup-btn');
             const msg = document.getElementById('auth-msg');
             msg.innerText = '';
+
+            // [추가] 관리자 로그인 폼 처리
+            const adminForm = document.getElementById('admin-login-form');
+            const adminLink = document.getElementById('admin-entry-link');
+            if (tab === 'admin') {
+                adminForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                signupForm.classList.add('hidden');
+                adminLink.classList.add('hidden');
+                loginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all text-purple-700 hover:text-purple-950";
+                signupBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all text-purple-700 hover:text-purple-950";
+                setTimeout(() => document.getElementById('admin-login-pw').focus(), 50);
+                return;
+            }
+            adminForm.classList.add('hidden');
+            adminLink.classList.remove('hidden');
 
             if (tab === 'login') {
                 loginForm.classList.remove('hidden');
@@ -608,6 +872,8 @@
         }
 
         function handleLogout() {
+            // [추가] 선생님이 학생 카드를 보고 있는 경우 → 관리자 화면으로 복귀
+            if (teacherViewingId) { returnToAdmin(); return; }
             if (hasUnsavedChanges) {
                 if (!confirm("저장하지 않은 데이터가 있습니다. 서버에 저장하지 않고 로그아웃 하시겠습니까?\n(취소 후 상단의 '서버에 저장하기' 버튼을 눌러주세요.)")) {
                     return;
@@ -635,16 +901,36 @@
             document.getElementById('main-app').classList.add('flex');
             document.getElementById('bottom-banner').classList.remove('hidden');
 
-            const user = usersData[currentUser] || { id: currentUser, name: '' };
+            let user = usersData[currentUser] || { id: currentUser, name: '' };
+            // [추가] 선생님 모드: 서버 전체 데이터에서 학생 이름 가져오기
+            if (teacherViewingId && globalAllData && globalAllData.users && globalAllData.users[currentUser]) {
+                const u = globalAllData.users[currentUser];
+                user = { id: currentUser, name: u.name || u.studentName || '' };
+            }
             document.getElementById('user-display-info').innerText = `${user.id} ${user.name || ''}`;
+
+            const tBanner = document.getElementById('teacher-view-banner');
+            const logoutBtn = document.getElementById('logout-btn');
+            if (teacherViewingId) {
+                tBanner.classList.remove('hidden');
+                tBanner.classList.add('flex');
+                document.getElementById('teacher-view-student').innerText = `${user.id} ${user.name || ''}`;
+                logoutBtn.innerText = '관리자 화면으로';
+            } else {
+                tBanner.classList.add('hidden');
+                tBanner.classList.remove('flex');
+                logoutBtn.innerText = '로그아웃';
+            }
 
             await loadUserCards();
             renderAllCards();
         }
 
         async function loadUserCards() {
+            cardsLoadedFromServer = false;
             if (GOOGLE_SCRIPT_URL) {
                 const res = await callGoogleAPI({ action: 'getCards', studentId: currentUser });
+                if (res && res.success) cardsLoadedFromServer = true;
                 if (res && res.success && res.cards && res.cards.length > 0) {
                     cardsData = res.cards.map(c => ({
                         ...c,
@@ -697,10 +983,27 @@
             const interviewBox = document.getElementById(`card-${cardId}-tab-interview`);
             const practicalBox = document.getElementById(`card-${cardId}-tab-practical`);
             const noneBox = document.getElementById(`card-${cardId}-tab-none`);
+            const essayBox = document.getElementById(`card-${cardId}-tab-essay`);
 
             const btnInterview = document.getElementById(`card-${cardId}-btn-interview`);
             const btnPractical = document.getElementById(`card-${cardId}-btn-practical`);
             const btnNone = document.getElementById(`card-${cardId}-btn-none`);
+            const btnEssay = document.getElementById(`card-${cardId}-btn-essay`);
+
+            // [추가] 논술/실기는 같은 날짜 칸(practicalDate)을 함께 사용 → 탭 전환 시 날짜 표시 동기화
+            if (targetCard) {
+                const pInput = document.getElementById(`card-${cardId}-practical-input`);
+                const eInput = document.getElementById(`card-${cardId}-essay-input`);
+                const v = formatDateToYYYYMMDD(targetCard.practicalDate);
+                if (pInput) pInput.value = v;
+                if (eInput) eInput.value = v;
+            }
+            if (essayBox) essayBox.classList.toggle('hidden', tabType !== 'essay');
+            if (btnEssay) {
+                btnEssay.className = tabType === 'essay'
+                    ? "flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-orange-500 text-white shadow-sm"
+                    : "flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-gray-100 text-gray-600 hover:bg-gray-200";
+            }
 
             if (interviewBox) interviewBox.classList.toggle('hidden', tabType !== 'interview');
             if (practicalBox) practicalBox.classList.toggle('hidden', tabType !== 'practical');
@@ -767,12 +1070,12 @@
 
                         <div class="space-y-2 relative z-10 text-xs">
                             <div class="flex gap-2">
-                                <input type="text" value="${card.university || ''}" onchange="updateCardField(${card.id}, 'university', this.value)" placeholder="학교명 (예: 고려대)" class="post-it-input w-1/2 font-bold text-gray-900">
-                                <input type="text" value="${card.department || ''}" onchange="updateCardField(${card.id}, 'department', this.value)" placeholder="학과명 (예: 경영학과)" class="post-it-input w-1/2 font-medium">
+                                <input type="text" value="${escapeHtml(card.university)}" onchange="updateCardField(${card.id}, 'university', this.value)" placeholder="학교명 (예: 고려대)" class="post-it-input w-1/2 font-bold text-gray-900">
+                                <input type="text" value="${escapeHtml(card.department)}" onchange="updateCardField(${card.id}, 'department', this.value)" placeholder="학과명 (예: 경영학과)" class="post-it-input w-1/2 font-medium">
                             </div>
 
                             <div>
-                                <input type="text" value="${card.type || ''}" onchange="updateCardField(${card.id}, 'type', this.value)" placeholder="전형명 (예: 학생부교과, 학교장추천)" class="post-it-input text-gray-800 font-medium">
+                                <input type="text" value="${escapeHtml(card.type)}" onchange="updateCardField(${card.id}, 'type', this.value)" placeholder="전형명 (예: 학생부교과, 학교장추천)" class="post-it-input text-gray-800 font-medium">
                             </div>
 
                             <div class="bg-white/70 p-2.5 rounded-xl border border-white/90 space-y-2.5">
@@ -803,6 +1106,9 @@
                                         <button type="button" id="card-${card.id}-btn-practical" onclick="switchCardTab(${card.id}, 'practical')" class="${currentTab === 'practical' ? 'flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-amber-500 text-white shadow-sm' : 'flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-gray-100 text-gray-600 hover:bg-gray-200'}">
                                             🎨 실기
                                         </button>
+                                        <button type="button" id="card-${card.id}-btn-essay" onclick="switchCardTab(${card.id}, 'essay')" class="${currentTab === 'essay' ? 'flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-orange-500 text-white shadow-sm' : 'flex-1 py-1 text-[10px] sm:text-[11px] font-bold rounded-lg transition-all bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                            ✍️ 논술
+                                        </button>
                                     </div>
 
                                     <div id="card-${card.id}-tab-none" class="py-1 text-center text-[10px] text-gray-400 font-medium ${currentTab === 'none' ? '' : 'hidden'}">
@@ -816,7 +1122,13 @@
 
                                     <div id="card-${card.id}-tab-practical" class="flex items-center gap-1.5 ${currentTab === 'practical' ? '' : 'hidden'}">
                                         <span class="text-[11px] text-amber-900 font-bold shrink-0 w-20">🎨 실기일시:</span>
-                                        <input type="date" value="${formatDateToYYYYMMDD(card.practicalDate)}" onchange="updateCardField(${card.id}, 'practicalDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                        <input type="date" id="card-${card.id}-practical-input" value="${formatDateToYYYYMMDD(card.practicalDate)}" onchange="updateCardField(${card.id}, 'practicalDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
+                                    </div>
+
+                                    <!-- [추가] 논술: 기존 시트 구조를 건드리지 않도록 실기 날짜 칸(practicalDate)을 함께 사용 -->
+                                    <div id="card-${card.id}-tab-essay" class="flex items-center gap-1.5 ${currentTab === 'essay' ? '' : 'hidden'}">
+                                        <span class="text-[11px] text-orange-900 font-bold shrink-0 w-20">✍️ 논술일시:</span>
+                                        <input type="date" id="card-${card.id}-essay-input" value="${formatDateToYYYYMMDD(card.practicalDate)}" onchange="updateCardField(${card.id}, 'practicalDate', this.value)" class="post-it-input py-0.5 text-[11px] bg-white">
                                     </div>
                                 </div>
 
@@ -848,14 +1160,14 @@
 
                             <div class="flex items-center gap-1.5">
                                 <span class="text-gray-600 font-bold shrink-0 text-[11px] pl-0.5">후보 번호:</span>
-                                <input type="text" value="${card.waitNum || ''}" onchange="updateCardField(${card.id}, 'waitNum', this.value)" placeholder="예비 번호 (예: 3번)" class="post-it-input py-1 text-xs">
+                                <input type="text" value="${escapeHtml(card.waitNum)}" onchange="updateCardField(${card.id}, 'waitNum', this.value)" placeholder="예비 번호 (예: 3번)" class="post-it-input py-1 text-xs">
                             </div>
 
                             <div class="pt-0.5">
                                 <label class="block text-[10px] font-bold text-purple-950 mb-0.5 flex items-center gap-1">
                                     <i class="fa-solid fa-comment-dots text-pink-500"></i> 담임선생님 메모/조언
                                 </label>
-                                <textarea onchange="updateCardField(${card.id}, 'teacherNote', this.value)" placeholder="선생님의 조언이나 특이사항을 작성해 주세요." class="post-it-input text-xs h-12 resize-none bg-white/60 font-medium">${card.teacherNote || ''}</textarea>
+                                <textarea onchange="updateCardField(${card.id}, 'teacherNote', this.value)" placeholder="선생님의 조언이나 특이사항을 작성해 주세요." class="post-it-input text-xs h-12 resize-none bg-white/60 font-medium">${escapeHtml(card.teacherNote)}</textarea>
                             </div>
 
                         </div>
@@ -903,6 +1215,14 @@
             const originalText = btn.innerHTML;
             btn.innerHTML = `<div class="spinner"></div> <span>저장 중...</span>`;
             btn.disabled = true;
+
+            // [추가] 선생님 모드 안전장치: 서버에서 카드를 제대로 못 불러온 상태면 저장 금지 (학생 데이터 보호)
+            if (teacherViewingId && !cardsLoadedFromServer) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert('서버에서 이 학생의 카드를 불러오지 못해 저장을 막았습니다. (학생 데이터 보호)\n관리자 화면으로 돌아가 다시 열어주세요.');
+                return;
+            }
 
             syncLocalAndGlobal();
 
@@ -1101,7 +1421,7 @@
 
             Object.keys(dataSourceUsers).forEach(studentId => {
                 // 시스템 가상 계정은 캘린더에서 무시합니다.
-                if(studentId === ADMIN_SYS_CONFIG_ID) return;
+                if(isSystemAccount(studentId)) return;
 
                 const classInfo = getClassInfo(studentId);
                 if (classFilter !== 'ALL' && classInfo.code !== classFilter) return;
@@ -1147,6 +1467,14 @@
                             });
                         }
 
+                        if (activeExamTab === 'essay' && practicalDateFormatted && (typeFilter === 'ALL' || typeFilter === 'ESSAY')) {
+                            allEvents.push({
+                                studentId: studentId, studentName: studentName, classLabel: classInfo.label, classCode: classInfo.code,
+                                universityInfo: uniDept, typeName: cardType, date: practicalDateFormatted, 
+                                category: 'ESSAY', categoryLabel: '✍️ 논술일', badgeColor: 'bg-orange-100 text-orange-900 border-orange-300'
+                            });
+                        }
+
                         // 서류/발표일은 탭과 관계없이 모두 표시
                         if (docDateFormatted && (typeFilter === 'ALL' || typeFilter === 'DOC')) {
                             allEvents.push({
@@ -1188,12 +1516,12 @@
                 dayEvents.forEach(ev => {
                     const displayName = ev.studentName ? ev.studentName : ev.studentId;
                     const uniShort = ev.universityInfo.split(' ')[0];
-                    const emojiMap = { 'INTERVIEW': '🗣️', 'PRACTICAL': '🎨', 'DOC': '📄', 'PASS': '🎉' };
+                    const emojiMap = { 'INTERVIEW': '🗣️', 'PRACTICAL': '🎨', 'ESSAY': '✍️', 'DOC': '📄', 'PASS': '🎉' };
                     const emoji = emojiMap[ev.category] || '📌';
 
                     dayCellHtml += `
-                        <div class="${ev.badgeColor} px-1 py-0.5 rounded text-[9.5px] font-bold truncate border shadow-xs" title="[${ev.classLabel}] ${displayName}: ${ev.universityInfo} (${ev.categoryLabel})">
-                            ${emoji} ${displayName}: ${uniShort}
+                        <div class="${ev.badgeColor} px-1 py-0.5 rounded text-[9.5px] font-bold truncate border shadow-xs" title="[${ev.classLabel}] ${escapeHtml(displayName)}: ${escapeHtml(ev.universityInfo)} (${ev.categoryLabel})">
+                            ${emoji} ${escapeHtml(displayName)}: ${escapeHtml(uniShort)}
                         </div>
                     `;
                 });
@@ -1218,17 +1546,17 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-1.5">
                                     <span class="bg-purple-200/80 text-purple-900 text-[10px] px-1.5 py-0.5 rounded-md font-extrabold">${ev.classLabel}</span>
-                                    <span class="font-bold text-purple-950">${displayName}</span>
+                                    <span class="font-bold text-purple-950">${escapeHtml(displayName)}</span>
                                 </div>
                                 <span class="font-extrabold px-2 py-0.5 rounded-md text-[10px] border ${ev.badgeColor}">
                                     ${ev.categoryLabel}
                                 </span>
                             </div>
                             <div class="text-gray-900 font-bold pl-0.5">
-                                ${ev.universityInfo}
+                                ${escapeHtml(ev.universityInfo)}
                             </div>
                             <div class="flex items-center justify-between text-[11px] text-gray-500 font-medium pl-0.5">
-                                <span>전형: ${ev.typeName}</span>
+                                <span>전형: ${escapeHtml(ev.typeName)}</span>
                                 <span class="font-bold text-purple-700">🗓️ ${ev.date}</span>
                             </div>
                         </div>
@@ -1237,7 +1565,1059 @@
                 });
             }
         }
+
+        /* =====================================================================
+           [추가] 공통 도우미
+           ===================================================================== */
+        function escapeHtml(v) {
+            if (v === null || v === undefined) return '';
+            return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function isSystemAccount(id) { return String(id || '').startsWith('ADMIN_SYS'); }
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+        async function callGoogleAPIRetry(data, tries = 3) {
+            for (let i = 0; i < tries; i++) {
+                const res = await callGoogleAPI(data);
+                if (res) return res;
+                await sleep(1200 * (i + 1));
+            }
+            return null;
+        }
+        function showToast(text, ok = true) {
+            const box = document.createElement('div');
+            box.className = `fixed top-5 right-5 z-[60] ${ok ? 'bg-emerald-600' : 'bg-red-600'} text-white px-4 py-3 rounded-2xl shadow-xl font-bold text-xs flex items-center gap-2`;
+            box.innerHTML = `<i class="fa-solid ${ok ? 'fa-circle-check' : 'fa-triangle-exclamation'} text-base"></i> ${escapeHtml(text)}`;
+            document.body.appendChild(box);
+            setTimeout(() => box.remove(), 3500);
+        }
+        function blankCard(i) {
+            return {
+                id: i, university: '', department: '', type: '', examType: 'none',
+                interviewDate: '', practicalDate: '', docDate: '', passDate: '',
+                step1: '미발표', finalResult: '미발표', waitNum: '', teacherNote: ''
+            };
+        }
+        function isCardEmpty(c) {
+            return !String(c.university || '').trim() && !String(c.department || '').trim() && !String(c.type || '').trim();
+        }
+        function normKey(v) { return String(v || '').replace(/\s+/g, '').replace(/\(.*?\)/g, '').toLowerCase(); }
+
+        // 기존 달력과 같은 방식으로 관리자 비밀번호 확인 (서버 동기화 값 우선)
+        async function getAdminPassword() {
+            let realPass = '1234';
+            if (GOOGLE_SCRIPT_URL) {
+                try {
+                    const res = await callGoogleAPI({ action: 'getCards', studentId: ADMIN_SYS_CONFIG_ID });
+                    if (res && res.success && res.cards && res.cards[0] && res.cards[0].teacherNote) {
+                        realPass = res.cards[0].teacherNote;
+                    }
+                } catch (e) {}
+            }
+            const localPass = localStorage.getItem('susi_admin_pass');
+            if (localPass && localPass !== '1234' && realPass === '1234') realPass = localPass;
+            return String(realPass);
+        }
+
+        /* =====================================================================
+           [추가] 관리자 로그인 / 로그아웃
+           ===================================================================== */
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const pw = document.getElementById('admin-login-pw').value;
+            const btn = document.getElementById('admin-login-btn');
+            const msg = document.getElementById('auth-msg');
+            const orig = btn.innerHTML;
+            btn.innerHTML = `<div class="spinner"></div> <span>확인 중...</span>`;
+            btn.disabled = true;
+
+            const realPass = await getAdminPassword();
+            btn.innerHTML = orig;
+            btn.disabled = false;
+
+            if (pw !== realPass) {
+                msg.className = "text-xs text-center mt-3 font-semibold text-pink-600";
+                msg.innerText = '관리자 비밀번호가 올바르지 않습니다.';
+                return;
+            }
+            msg.innerText = '';
+            document.getElementById('admin-login-pw').value = '';
+            adminPassCache = pw;
+            isAdminMode = true;
+            document.getElementById('auth-screen').classList.add('hidden');
+            const app = document.getElementById('admin-app');
+            app.classList.remove('hidden');
+            app.classList.add('flex');
+            // 달력도 이미 인증된 상태로 열 수 있게
+            document.getElementById('calendar-auth-view').classList.add('hidden');
+            document.getElementById('calendar-content-view').classList.remove('hidden');
+            await loadAdminData();
+        }
+
+        function handleAdminLogout() {
+            isAdminMode = false;
+            adminPassCache = '';
+            adminServerPw = {};
+            teacherViewingId = null;
+            globalAllData = null;
+            adminPwBook = {};
+            adminShowPw = false;
+            const app = document.getElementById('admin-app');
+            app.classList.add('hidden');
+            app.classList.remove('flex');
+            document.getElementById('calendar-auth-view').classList.remove('hidden');
+            document.getElementById('calendar-content-view').classList.add('hidden');
+            document.getElementById('admin-pass-input').value = '';
+            document.getElementById('admin-auth-msg').innerText = '';
+            document.getElementById('auth-screen').classList.remove('hidden');
+            switchAuthTab('login');
+        }
+
+        function openCalendarFromAdmin() {
+            document.getElementById('calendar-auth-view').classList.add('hidden');
+            document.getElementById('calendar-content-view').classList.remove('hidden');
+            document.getElementById('calendar-modal').classList.remove('hidden');
+            renderCalendar();
+        }
+
+        /* =====================================================================
+           [추가] 비밀번호 장부 (일괄 등록으로 만든 계정 비밀번호를 모든 선생님이 볼 수 있도록
+                  기존 시트 구조 그대로 '시스템 계정'의 메모칸에 나눠 저장)
+           ===================================================================== */
+        async function loadPwBook() {
+            const res = await callGoogleAPI({ action: 'getCards', studentId: ADMIN_PWBOOK_ID });
+            if (!res) return null; // 통신 실패
+            if (!res.success || !res.cards || !res.cards.length) return {};
+            const sorted = [...res.cards].sort((a, b) => Number(a.id) - Number(b.id));
+            const joined = sorted.map(c => String(c.teacherNote || '')).join('');
+            if (!joined.trim()) return {};
+            try { return JSON.parse(joined) || {}; } catch (e) { console.warn('pwbook parse fail'); return {}; }
+        }
+        async function savePwBook(newEntries) {
+            // 다른 선생님이 동시에 저장했을 수 있으므로 최신본을 다시 읽어 합친 뒤 저장
+            const latest = await loadPwBook();
+            if (latest === null) return false;
+            const merged = { ...latest, ...newEntries };
+            const text = JSON.stringify(merged);
+            const CHUNK = 40000; // 구글 시트 한 칸 최대 50,000자
+            if (text.length > CHUNK * 12) return false;
+            const cards = Array.from({ length: 12 }, (_, i) => {
+                const c = blankCard(i + 1);
+                c.teacherNote = text.slice(i * CHUNK, (i + 1) * CHUNK);
+                return c;
+            });
+            const res = await callGoogleAPIRetry({ action: 'saveCards', studentId: ADMIN_PWBOOK_ID, cards });
+            if (res && res.success) { adminPwBook = merged; return true; }
+            return false;
+        }
+        function getLocalCreatedPw() {
+            try { return JSON.parse(localStorage.getItem('susi_admin_created_pw')) || {}; } catch (e) { return {}; }
+        }
+        function setLocalCreatedPw(id, pw) {
+            const m = getLocalCreatedPw(); m[id] = pw;
+            localStorage.setItem('susi_admin_created_pw', JSON.stringify(m));
+        }
+        function getServerPw(u) {
+            if (!u) return '';
+            const v = u.pw ?? u.password ?? u.pass ?? u['비밀번호'] ?? u.PW ?? '';
+            return v === null || v === undefined ? '' : String(v);
+        }
+        function getStudentPw(id) {
+            const u = globalAllData && globalAllData.users ? globalAllData.users[id] : null;
+            const serverPw = getServerPw(u);
+            if (serverPw) return serverPw;
+            if (adminServerPw[id] !== undefined && adminServerPw[id] !== '') return String(adminServerPw[id]);
+            if (adminPwBook[id]) return String(adminPwBook[id]);
+            const local = getLocalCreatedPw();
+            if (local[id]) return String(local[id]);
+            return '';
+        }
+
+        /* =====================================================================
+           [추가] 관리자 데이터 불러오기 & 가공
+           ===================================================================== */
+        async function loadAdminData() {
+            const wrap = document.getElementById('admin-table-wrap');
+            const btn = document.getElementById('admin-refresh-btn');
+            btn.disabled = true;
+            wrap.innerHTML = `<div class="flex items-center justify-center gap-2 py-16 text-xs text-purple-700 font-bold"><div class="spinner spinner-dark"></div> 구글 시트에서 전체 학생 데이터를 불러오는 중...</div>`;
+
+            const data = await callGoogleAPIRetry({ action: 'getAllData' });
+            const book = await loadPwBook();
+            // [추가] Apps Script에 '비밀번호 조회' 기능(추가코드)을 붙였다면 학생이 직접 가입한 비밀번호도 불러옴
+            const pwRes = await callGoogleAPI({ action: 'getPasswords', adminPass: adminPassCache });
+            adminServerPwInfo = pwRes;
+            adminServerPw = (pwRes && pwRes.success && pwRes.passwords) ? pwRes.passwords : {};
+            btn.disabled = false;
+
+            if (!data || !data.users) {
+                wrap.innerHTML = `<div class="py-16 text-center text-xs text-red-600 font-bold">데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 [새로고침]을 눌러주세요.</div>`;
+                return;
+            }
+            globalAllData = data;
+            if (!globalAllData.cards) globalAllData.cards = {};
+            adminPwBook = book || {};
+
+            // 반 목록 만들기
+            const sel = document.getElementById('admin-class-filter');
+            const prev = sel.value || 'ALL';
+            const classMap = {};
+            Object.keys(globalAllData.users).forEach(id => {
+                if (isSystemAccount(id)) return;
+                const ci = getClassInfo(String(id));
+                classMap[ci.code] = ci.label;
+            });
+            const codes = Object.keys(classMap).sort();
+            sel.innerHTML = `<option value="ALL">전체 반</option>` + codes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(classMap[c])} (${escapeHtml(c)})</option>`).join('');
+            sel.value = codes.includes(prev) ? prev : 'ALL';
+
+            renderAdminView();
+        }
+
+        function getStudentCardsForAdmin(id) {
+            const raw = (globalAllData && globalAllData.cards && globalAllData.cards[id]) || [];
+            return [...raw].map((c, i) => ({ ...c, id: Number(c.id) || (i + 1) })).sort((a, b) => a.id - b.id);
+        }
+
+        function getAdminStudents() {
+            if (!globalAllData || !globalAllData.users) return [];
+            const classFilter = document.getElementById('admin-class-filter').value;
+            const q = document.getElementById('admin-search').value.trim().toLowerCase();
+            return Object.keys(globalAllData.users)
+                .filter(id => !isSystemAccount(id))
+                .map(id => {
+                    const u = globalAllData.users[id] || {};
+                    const cards = getStudentCardsForAdmin(id);
+                    return {
+                        id: String(id), name: u.name || u.studentName || '',
+                        classInfo: getClassInfo(String(id)), pw: getStudentPw(id),
+                        cards, filled: cards.filter(c => !isCardEmpty(c))
+                    };
+                })
+                .filter(st => classFilter === 'ALL' || st.classInfo.code === classFilter)
+                .filter(st => {
+                    if (!q) return true;
+                    if (st.id.toLowerCase().includes(q) || st.name.toLowerCase().includes(q)) return true;
+                    return st.filled.some(c => `${c.university} ${c.department} ${c.type}`.toLowerCase().includes(q));
+                })
+                .sort((a, b) => a.id.localeCompare(b.id, 'ko', { numeric: true }));
+        }
+
+        function cardKindLabel(c) { return guessKind(c.university) === '2yr' ? '전문대' : '4년제'; }
+        function getExamInfo(c) {
+            const tab = c.examType || (c.interviewDate ? 'interview' : (c.practicalDate ? 'practical' : 'none'));
+            if (tab === 'interview') return { kind: 'INTERVIEW', label: '🗣️ 면접', date: formatDateToYYYYMMDD(c.interviewDate) };
+            if (tab === 'essay') return { kind: 'ESSAY', label: '✍️ 논술', date: formatDateToYYYYMMDD(c.practicalDate) };
+            if (tab === 'practical') {
+                // 논술 탭이 없던 시절 '실기' 탭에 논술을 적은 경우 → 전형명에 '논술'이 있으면 논술로 표시
+                const looksEssay = /논술/.test(`${c.type || ''} ${c.department || ''}`);
+                return looksEssay
+                    ? { kind: 'ESSAY', label: '✍️ 논술 (실기탭 기재)', date: formatDateToYYYYMMDD(c.practicalDate) }
+                    : { kind: 'PRACTICAL', label: '🎨 실기', date: formatDateToYYYYMMDD(c.practicalDate) };
+            }
+            return { kind: 'NONE', label: '-', date: '' };
+        }
+        function resultBadge(v) {
+            const map = {
+                '최종합격': 'bg-red-100 text-red-700 border-red-300', '충원합격': 'bg-emerald-100 text-emerald-700 border-emerald-300',
+                '예비후보': 'bg-amber-100 text-amber-800 border-amber-300', '불합격': 'bg-gray-100 text-gray-500 border-gray-300',
+                '1단계통과': 'bg-purple-100 text-purple-700 border-purple-300'
+            };
+            const label = { '최종합격': '👑 최초합격', '충원합격': '🍀 충원합격', '예비후보': '⏳ 예비후보', '1단계통과': '🎉 1단계통과' }[v] || v || '미발표';
+            return `<span class="px-1.5 py-0.5 rounded-md border text-[10.5px] font-bold whitespace-nowrap ${map[v] || 'bg-white text-gray-400 border-gray-200'}">${escapeHtml(label)}</span>`;
+        }
+
+        function switchAdminTab(tab) {
+            adminTab = tab;
+            document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            renderAdminView();
+        }
+
+        function renderAdminStats(students) {
+            const allFilled = students.flatMap(s => s.filled);
+            const first = allFilled.filter(c => c.finalResult === '최종합격').length;
+            const extra = allFilled.filter(c => c.finalResult === '충원합격').length;
+            const passedStudents = students.filter(s => s.filled.some(c => c.finalResult === '최종합격' || c.finalResult === '충원합격')).length;
+            const items = [
+                ['👥 학생 수', students.length + '명'],
+                ['📝 카드 작성 학생', students.filter(s => s.filled.length).length + '명'],
+                ['📌 총 지원 카드', allFilled.length + '장'],
+                ['🎉 합격 (최초/충원)', `${first} / ${extra}건`],
+                ['🏅 합격 학생', passedStudents + '명']
+            ];
+            document.getElementById('admin-stats').innerHTML = items.map(([k, v]) => `
+                <div class="glass-card rounded-xl px-3 py-2.5">
+                    <div class="text-[10.5px] text-purple-700 font-bold">${k}</div>
+                    <div class="text-lg font-extrabold text-purple-950">${v}</div>
+                </div>`).join('');
+        }
+
+        function renderAdminView() {
+            if (!globalAllData) return;
+            const students = getAdminStudents();
+            renderAdminStats(students);
+
+            // 비밀번호 표시 가능 여부 안내
+            const notice = document.getElementById('admin-pw-notice');
+            const unknownPw = students.filter(s => !s.pw).length;
+            if (unknownPw > 0) {
+                notice.classList.remove('hidden');
+                const info = adminServerPwInfo;
+                let reason = '';
+                if (info && info.success === false && info.message) reason = `<br>· 서버 응답: ${escapeHtml(info.message)}`;
+                if (info && info.sheets) reason += `<br>· 시트 목록: ${escapeHtml(info.sheets.map(x => `${x.name}[${(x.headers || []).join(', ')}]`).join(' / '))}`;
+                notice.innerHTML = `⚠️ 비밀번호 '확인 불가' 학생 ${unknownPw}명 — 학생이 직접 가입한 비밀번호는 구글 시트 서버(Apps Script)가 보내줘야 보여요.<br>
+                    → 함께 드린 <b>Apps Script 추가코드</b>를 붙이고 '새 버전'으로 배포하면 바로 보입니다. (나이스 일괄 등록으로 자동 가입한 학생은 추가코드 없이도 보여요)${reason}`;
+            } else notice.classList.add('hidden');
+
+            document.getElementById('print-slips-btn').classList.toggle('hidden', adminTab !== 'accounts');
+
+            const extra = document.getElementById('admin-tab-extra');
+            const wrap = document.getElementById('admin-table-wrap');
+            const keepExamFilter = document.getElementById('exam-kind-filter')?.value || 'ALL';
+            const keepExamSort = document.getElementById('exam-sort')?.value || 'id';
+            const keepResultFilter = document.getElementById('result-filter')?.value || 'ALL';
+            const keepShowEmpty = document.getElementById('cards-show-empty') ? document.getElementById('cards-show-empty').checked : true;
+
+            if (adminTab === 'accounts') {
+                extra.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+                        <p class="text-[11px] text-gray-500 font-medium">학번순 정렬 · [카드 열기]를 누르면 선생님이 그 학생의 카드를 직접 보고 메모할 수 있어요.</p>
+                        <button onclick="adminShowPw=!adminShowPw; renderAdminView();" class="px-3 py-1 text-[11px] font-bold rounded-lg border ${adminShowPw ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-purple-800 border-purple-200'}">
+                            <i class="fa-solid ${adminShowPw ? 'fa-eye-slash' : 'fa-eye'}"></i> 비밀번호 ${adminShowPw ? '가리기' : '모두 보기'}
+                        </button>
+                    </div>`;
+                const headers = ['반', '학번', '이름', '비밀번호', '작성한 카드 수'];
+                const rows = students.map(s => [s.classInfo.label, s.id, s.name, s.pw || '확인 불가', s.filled.length]);
+                adminExport = { name: '학생계정', headers, rows };
+                wrap.innerHTML = students.length ? `
+                    <table class="admin-table">
+                        <thead><tr><th>반</th><th>학번</th><th>이름</th><th>비밀번호</th><th>작성 카드</th><th>관리</th></tr></thead>
+                        <tbody>${students.map(s => `
+                            <tr>
+                                <td class="text-purple-700 font-bold">${escapeHtml(s.classInfo.label)}</td>
+                                <td class="font-bold">${escapeHtml(s.id)}</td>
+                                <td class="font-bold text-purple-950">${escapeHtml(s.name)}</td>
+                                <td>${s.pw
+                                    ? `<span class="font-mono ${adminShowPw ? '' : 'pw-mask'}">${adminShowPw ? escapeHtml(s.pw) : '••••'}</span>
+                                       <button title="비밀번호 복사" onclick="copyText(${escapeHtml(JSON.stringify(s.pw))})" class="ml-1 text-purple-400 hover:text-purple-700"><i class="fa-regular fa-copy"></i></button>`
+                                    : `<span class="text-gray-400 text-[11px]">확인 불가</span>`}</td>
+                                <td><span class="font-bold ${s.filled.length ? 'text-emerald-700' : 'text-red-500'}">${s.filled.length}</span> / 12</td>
+                                <td><button onclick="openStudentFromAdmin('${escapeHtml(s.id)}')" class="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[11px] font-bold whitespace-nowrap"><i class="fa-solid fa-note-sticky"></i> 카드 열기</button></td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>` : emptyMsg();
+            }
+
+            else if (adminTab === 'cards') {
+                extra.innerHTML = `
+                    <label class="flex items-center gap-1.5 text-[11px] text-gray-600 font-semibold px-1">
+                        <input type="checkbox" id="cards-show-empty" ${keepShowEmpty ? 'checked' : ''} onchange="renderAdminView()"> 카드를 하나도 안 쓴 학생도 표시
+                    </label>`;
+                const headers = ['반', '학번', '이름', '카드', '구분', '대학', '학과', '전형', '대학별고사', '고사일', '서류제출', '합격발표', '1단계', '최종결과'];
+                const rows = [];
+                let html = '';
+                students.forEach(s => {
+                    if (!s.filled.length) {
+                        if (!keepShowEmpty) return;
+                        rows.push([s.classInfo.label, s.id, s.name, '', '', '(작성한 카드 없음)', '', '', '', '', '', '', '', '']);
+                        html += `<tr class="student-first"><td class="font-bold">${escapeHtml(s.id)}</td><td class="font-bold text-purple-950">${escapeHtml(s.name)}</td><td colspan="8" class="text-red-400 text-[11px] font-semibold">작성한 카드 없음</td></tr>`;
+                        return;
+                    }
+                    s.filled.forEach((c, idx) => {
+                        const ex = getExamInfo(c);
+                        rows.push([s.classInfo.label, s.id, s.name, c.id, cardKindLabel(c), c.university || '', c.department || '', c.type || '', ex.label === '-' ? '' : ex.label, ex.date, formatDateToYYYYMMDD(c.docDate), formatDateToYYYYMMDD(c.passDate), c.step1 || '', c.finalResult || '']);
+                        html += `<tr class="${idx === 0 ? 'student-first' : ''}">
+                            <td class="font-bold">${idx === 0 ? escapeHtml(s.id) : ''}</td>
+                            <td class="font-bold text-purple-950">${idx === 0 ? escapeHtml(s.name) : ''}</td>
+                            <td class="whitespace-nowrap"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${cardKindLabel(c) === '4년제' ? 'bg-purple-100 text-purple-800' : 'bg-teal-100 text-teal-800'}">${cardKindLabel(c)}</span> <span class="text-[10px] text-gray-400">#${c.id}</span></td>
+                            <td class="font-bold text-gray-900">${escapeHtml(c.university)}</td>
+                            <td>${escapeHtml(c.department)}</td>
+                            <td class="text-gray-600">${escapeHtml(c.type)}</td>
+                            <td class="whitespace-nowrap">${ex.label === '-' ? '<span class="text-gray-300">-</span>' : escapeHtml(ex.label)} ${ex.date ? `<span class="text-gray-500">${ex.date}</span>` : ''}</td>
+                            <td class="whitespace-nowrap">${formatDateToYYYYMMDD(c.docDate) || '<span class="text-gray-300">-</span>'}</td>
+                            <td class="whitespace-nowrap">${formatDateToYYYYMMDD(c.passDate) || '<span class="text-gray-300">-</span>'}</td>
+                            <td>${resultBadge(c.finalResult)}</td>
+                        </tr>`;
+                    });
+                });
+                adminExport = { name: '수시카드목록', headers, rows };
+                wrap.innerHTML = html ? `<table class="admin-table"><thead><tr><th>학번</th><th>이름</th><th>카드</th><th>대학</th><th>학과</th><th>전형</th><th>대학별고사</th><th>서류제출</th><th>합격발표</th><th>최종결과</th></tr></thead><tbody>${html}</tbody></table>` : emptyMsg();
+            }
+
+            else if (adminTab === 'exams') {
+                extra.innerHTML = `
+                    <div class="flex flex-wrap items-center gap-2 px-1 text-[11px] font-bold text-purple-900">
+                        구분: <select id="exam-kind-filter" onchange="renderAdminView()" class="border border-purple-200 rounded-lg px-2 py-1 bg-purple-50">
+                            <option value="ALL">전체</option><option value="INTERVIEW">🗣️ 면접</option><option value="PRACTICAL">🎨 실기</option><option value="ESSAY">✍️ 논술</option>
+                        </select>
+                        정렬: <select id="exam-sort" onchange="renderAdminView()" class="border border-purple-200 rounded-lg px-2 py-1 bg-purple-50">
+                            <option value="id">학번순</option><option value="date">날짜순</option>
+                        </select>
+                        <span class="text-gray-400 font-medium">※ 전형명에 '논술'이 들어간 실기탭 기재 건은 논술로 표시해요.</span>
+                    </div>`;
+                document.getElementById('exam-kind-filter').value = keepExamFilter;
+                document.getElementById('exam-sort').value = keepExamSort;
+                let list = [];
+                students.forEach(s => s.filled.forEach(c => {
+                    const ex = getExamInfo(c);
+                    if (ex.kind === 'NONE') return;
+                    if (keepExamFilter !== 'ALL' && ex.kind !== keepExamFilter) return;
+                    list.push({ s, c, ex });
+                }));
+                if (keepExamSort === 'date') list.sort((a, b) => (a.ex.date || '9999').localeCompare(b.ex.date || '9999') || a.s.id.localeCompare(b.s.id, 'ko', { numeric: true }));
+                const headers = ['반', '학번', '이름', '구분', '대학', '학과', '전형', '대학별고사', '일자', '1단계', '최종결과'];
+                adminExport = { name: '대학별고사', headers, rows: list.map(({ s, c, ex }) => [s.classInfo.label, s.id, s.name, cardKindLabel(c), c.university || '', c.department || '', c.type || '', ex.label, ex.date, c.step1 || '', c.finalResult || '']) };
+                let lastId = null;
+                wrap.innerHTML = list.length ? `<table class="admin-table"><thead><tr><th>학번</th><th>이름</th><th>대학</th><th>학과</th><th>전형</th><th>고사 구분</th><th>일자</th><th>1단계</th><th>최종결과</th></tr></thead><tbody>${list.map(({ s, c, ex }) => {
+                    const first = keepExamSort === 'id' && s.id !== lastId; lastId = s.id;
+                    const showName = keepExamSort === 'date' || first;
+                    const color = ex.kind === 'INTERVIEW' ? 'bg-purple-100 text-purple-800' : ex.kind === 'ESSAY' ? 'bg-orange-100 text-orange-800' : 'bg-amber-100 text-amber-900';
+                    return `<tr class="${first ? 'student-first' : ''}">
+                        <td class="font-bold">${showName ? escapeHtml(s.id) : ''}</td><td class="font-bold text-purple-950">${showName ? escapeHtml(s.name) : ''}</td>
+                        <td class="font-bold text-gray-900">${escapeHtml(c.university)}</td><td>${escapeHtml(c.department)}</td><td class="text-gray-600">${escapeHtml(c.type)}</td>
+                        <td><span class="px-1.5 py-0.5 rounded text-[10.5px] font-bold whitespace-nowrap ${color}">${escapeHtml(ex.label)}</span></td>
+                        <td class="whitespace-nowrap font-bold text-purple-800">${ex.date || '<span class="text-red-400 font-semibold">날짜 미기재</span>'}</td>
+                        <td>${resultBadge(c.step1 === '미발표' ? '' : c.step1)}</td><td>${resultBadge(c.finalResult)}</td></tr>`;
+                }).join('')}</tbody></table>` : emptyMsg('면접·실기·논술 일정이 있는 카드가 없습니다.');
+            }
+
+            else if (adminTab === 'results') {
+                extra.innerHTML = `
+                    <div class="flex flex-wrap items-center gap-2 px-1 text-[11px] font-bold text-purple-900">
+                        결과: <select id="result-filter" onchange="renderAdminView()" class="border border-purple-200 rounded-lg px-2 py-1 bg-purple-50">
+                            <option value="ALL">전체</option><option value="PASS">🎉 합격만 (최초+충원)</option><option value="최종합격">👑 최초합격</option>
+                            <option value="충원합격">🍀 충원합격</option><option value="예비후보">⏳ 예비후보</option><option value="1단계통과">1단계통과</option>
+                            <option value="불합격">불합격</option><option value="미발표">미발표</option>
+                        </select>
+                    </div>`;
+                document.getElementById('result-filter').value = keepResultFilter;
+                const f = keepResultFilter;
+                let list = [];
+                students.forEach(s => s.filled.forEach(c => {
+                    const fr = c.finalResult || '미발표';
+                    if (f === 'PASS' && !(fr === '최종합격' || fr === '충원합격')) return;
+                    if (f === '1단계통과' && c.step1 !== '1단계통과') return;
+                    if (!['ALL', 'PASS', '1단계통과'].includes(f) && fr !== f) return;
+                    list.push({ s, c });
+                }));
+                const headers = ['반', '학번', '이름', '구분', '대학', '학과', '전형', '합격발표일', '1단계', '최종결과', '예비번호'];
+                adminExport = { name: '합격자발표', headers, rows: list.map(({ s, c }) => [s.classInfo.label, s.id, s.name, cardKindLabel(c), c.university || '', c.department || '', c.type || '', formatDateToYYYYMMDD(c.passDate), c.step1 || '', c.finalResult || '', c.waitNum || '']) };
+                let lastId = null;
+                wrap.innerHTML = list.length ? `<table class="admin-table"><thead><tr><th>학번</th><th>이름</th><th>구분</th><th>대학</th><th>학과</th><th>전형</th><th>합격발표일</th><th>1단계</th><th>최종결과</th><th>예비번호</th></tr></thead><tbody>${list.map(({ s, c }) => {
+                    const first = s.id !== lastId; lastId = s.id;
+                    return `<tr class="${first ? 'student-first' : ''}">
+                        <td class="font-bold">${first ? escapeHtml(s.id) : ''}</td><td class="font-bold text-purple-950">${first ? escapeHtml(s.name) : ''}</td>
+                        <td class="text-[11px] text-gray-500">${cardKindLabel(c)}</td>
+                        <td class="font-bold text-gray-900">${escapeHtml(c.university)}</td><td>${escapeHtml(c.department)}</td><td class="text-gray-600">${escapeHtml(c.type)}</td>
+                        <td class="whitespace-nowrap">${formatDateToYYYYMMDD(c.passDate) || '<span class="text-gray-300">-</span>'}</td>
+                        <td>${resultBadge(c.step1 === '미발표' ? '' : c.step1)}</td><td>${resultBadge(c.finalResult)}</td>
+                        <td class="font-bold text-amber-700">${escapeHtml(c.waitNum)}</td></tr>`;
+                }).join('')}</tbody></table>` : emptyMsg('조건에 맞는 카드가 없습니다.');
+            }
+        }
+        function emptyMsg(t = '표시할 학생이 없습니다.') {
+            return `<div class="py-16 text-center text-xs text-gray-400 font-medium"><i class="fa-solid fa-inbox text-3xl text-purple-200 mb-2"></i><p>${escapeHtml(t)}</p></div>`;
+        }
+
+        function copyText(t) {
+            navigator.clipboard.writeText(String(t)).then(() => showToast('복사했어요!')).catch(() => prompt('복사해서 사용하세요', t));
+        }
+
+        function exportAdminTab() {
+            if (!adminExport.rows.length) { showToast('내보낼 내용이 없어요', false); return; }
+            const cls = document.getElementById('admin-class-filter');
+            const clsName = cls.value === 'ALL' ? '전체' : cls.value;
+            const ws = XLSX.utils.aoa_to_sheet([adminExport.headers, ...adminExport.rows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, adminExport.name);
+            XLSX.writeFile(wb, `수시대박_${adminExport.name}_${clsName}.xlsx`);
+        }
+
+        function printPasswordSlips() {
+            const students = getAdminStudents().filter(s => s.pw);
+            if (!students.length) { showToast('비밀번호를 확인할 수 있는 학생이 없어요', false); return; }
+            const url = location.href.split('#')[0].split('?')[0];
+            const slips = students.map(s => `
+                <div class="slip"><div class="t">🍉 2027 수시대박 로그인 안내</div>
+                <div><b>${escapeHtml(s.id)} ${escapeHtml(s.name)}</b></div>
+                <div>학번(아이디): <b>${escapeHtml(s.id)}</b></div>
+                <div>비밀번호: <b class="pw">${escapeHtml(s.pw)}</b></div>
+                <div class="u">${escapeHtml(url)}</div></div>`).join('');
+            const w = window.open('', '_blank');
+            if (!w) { alert('팝업이 차단되었어요. 팝업을 허용해 주세요.'); return; }
+            w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>비밀번호 안내쪽지</title>
+                <style>body{font-family:'Noto Sans KR',sans-serif;margin:10mm}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+                .slip{border:1.5px dashed #999;border-radius:6px;padding:4mm;font-size:12px;line-height:1.7;break-inside:avoid}
+                .t{font-weight:800;color:#6b21a8;margin-bottom:2px}.pw{font-size:15px;letter-spacing:2px}.u{font-size:9px;color:#888;word-break:break-all}</style></head>
+                <body><div class="grid">${slips}</div><script>window.onload=()=>window.print()<\/script></body></html>`);
+            w.document.close();
+        }
+
+        /* =====================================================================
+           [추가] 관리자 → 학생 카드 직접 열기
+           ===================================================================== */
+        async function openStudentFromAdmin(id) {
+            teacherViewingId = id;
+            currentUser = id;
+            cardsData = [];
+            activeCardTabs = {};
+            hasUnsavedChanges = false;
+            document.getElementById('unsaved-warning').classList.add('hidden');
+            document.getElementById('unsaved-dot').classList.add('hidden');
+            const app = document.getElementById('admin-app');
+            app.classList.add('hidden');
+            app.classList.remove('flex');
+            window.scrollTo(0, 0);
+            await showMainApp();
+        }
+
+        async function returnToAdmin() {
+            if (hasUnsavedChanges && !confirm("저장하지 않은 내용이 있습니다. 저장하지 않고 관리자 화면으로 돌아갈까요?\n(취소 후 '서버에 저장하기'를 눌러주세요.)")) return;
+            teacherViewingId = null;
+            currentUser = null;
+            cardsData = [];
+            activeCardTabs = {};
+            hasUnsavedChanges = false;
+            document.getElementById('unsaved-warning').classList.add('hidden');
+            document.getElementById('unsaved-dot').classList.add('hidden');
+            document.getElementById('teacher-view-banner').classList.add('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('flex');
+            document.getElementById('bottom-banner').classList.add('hidden');
+            const app = document.getElementById('admin-app');
+            app.classList.remove('hidden');
+            app.classList.add('flex');
+            await loadAdminData();
+        }
+
+        /* =====================================================================
+           [추가] 나이스 파일 일괄 등록
+           ===================================================================== */
+        let importState = { wb: null, rows: [], headerRow: 0, mapping: {}, items: [], results: [], running: false };
+
+        // 나이스 [대입전형자료 > 제공현황조회 > 제공현황진행상황조회 > 반별] 엑셀 기준 + 다른 양식도 최대한 인식
+        const IMPORT_FIELDS = [
+            { key: 'studentId', label: '학번', match: h => h === '학번' || h === '학생번호' },
+            { key: 'grade', label: '학년', match: h => h === '학년' || h === '계열/학년/학과' || h === '학년/반' },
+            { key: 'classNo', label: '반', match: h => h === '반' || h === '학급' || h === '반명' },
+            { key: 'number', label: '번호', match: h => h === '번호' || h === '출석번호' || h === '번' },
+            { key: 'name', label: '성명', match: h => ['성명', '이름', '학생명', '학생성명'].includes(h) },
+            { key: 'university', label: '대학', match: h => ['대학', '대학명', '지원대학', '대학교명', '지원대학명', '학교명'].includes(h) },
+            { key: 'unit', label: '평가단위명 (전형+학과)', match: h => ['평가단위명', '평가단위', '모집단위(전형)'].includes(h) },
+            { key: 'department', label: '모집단위/학과 (따로 있을 때)', match: h => ['모집단위', '모집단위명', '학과', '학과명', '학부(과)', '전공', '지원학과'].includes(h) },
+            { key: 'type', label: '전형명 (따로 있을 때)', match: h => ['전형명', '전형', '세부전형', '지원전형'].includes(h) },
+            { key: 'examNo', label: '수험번호 (중복 제거용)', match: h => h === '수험번호' },
+            { key: 'status', label: '진행상태', match: h => h === '진행상태' || h === '처리상태' },
+            { key: 'period', label: '모집시기', match: h => h === '모집시기' },
+            { key: 'uniKind', label: '대학구분 (선택)', match: h => ['대학구분', '학교구분', '대학유형', '학제'].includes(h) }
+        ];
+
+        // 전문대학 이름 일부 (틀리면 미리보기에서 바꿀 수 있어요)
+        const JUNIOR_COLLEGE_KEYS = ['전문대', '폴리텍', '경기과학기술', '신안산', '안산대', '한양여자', '인하공업', '부천대', '유한대', '동양미래', '명지전문', '연성대', '오산대', '수원과학', '동남보건', '신구대', '경민대', '대림대', '인덕대', '서일대', '배화여자', '삼육보건', '숭의여자', '재능대', '경인여자', '김포대', '동서울대', '여주대', '계원예술', '서울예술대', '백석예술', '장안대', '용인예술과학', '두원공과', '청강문화산업', '수원여자', '국제대', '경복대', '한국관광대', '서정대', '동아방송예술', '농수산대', '보건대', '간호대', '과학대', '방송예술', '공업대', '정화예술', '한국영상대', '송곡대', '서영대', '영진전문', '대구과학', '영남이공', '계명문화', '대전과학기술', '우송정보', '혜전대', '아주자동차', '한국승강기', '전주비전', '마산대', '동의과학', '경남정보', '부산경상', '동주대', '울산과학대', '조선이공', '광주보건', '기독간호', '춘해보건', '제주한라', '한림성심', '강릉영동', '세경대', '송호대', '충북보건과학', '충청대', '백제예술', '원광보건', '군장대', '전남과학', '순천제일', '거제대', '연암공과', '구미대', '선린대', '포항대', '안동과학', '가톨릭상지', '경북전문', '문경대', '수성대', '호산대', '대경대', '김해대', '창원문성', '진주보건', '동원과학', '부산과학', '대동대', '부산여자', '동부산', '신성대', '한국골프', '강동대', '웅지세무', '오산대', '서울보건', '적십자간호'];
+        // 수시 6회 제한이 없는 특수대학 → 일반 4년제 뒤쪽에 배치
+        const SPECIAL_UNI_KEYS = ['과학기술원', 'kaist', 'dgist', 'unist', 'gist', '경찰대', '사관학교', '에너지공과', '국군간호'];
+
+        function guessKind(uni, kindCell) {
+            const k = String(kindCell || '');
+            if (/전문|2년|3년|전문학사/.test(k)) return '2yr';
+            if (/4년|일반대|교육대|산업대/.test(k)) return '4yr';
+            const u = normKey(uni);
+            if (/과학기술원|과학기술대|기술교육대/.test(u)) return '4yr';
+            if (JUNIOR_COLLEGE_KEYS.some(key => u.includes(key))) return '2yr';
+            return '4yr';
+        }
+        function isSpecialUni(uni) { const u = normKey(uni); return SPECIAL_UNI_KEYS.some(k => u.includes(k)); }
+
+        // 대학 이름 비교용 정규화 (예: '성신여자대학교' = '성신여대', '한양대학교ERICA캠퍼스' ≈ '한양대 에리카')
+        function normUni(v) {
+            return String(v || '').toLowerCase().replace(/\s+/g, '').replace(/[()·\[\]]/g, '')
+                .replace(/^국립/, '').replace(/erica/g, '에리카')
+                .replace(/대학교/g, '대').replace(/대학/g, '대').replace(/캠퍼스/g, '')
+                .replace(/여자대/g, '여대').replace(/과학기술/g, '과기').replace(/교육대/g, '교대')
+                .replace(/외국어대/g, '외대').replace(/공과대/g, '공대');
+        }
+        function sameUni(a, b) {
+            const x = normUni(a), y = normUni(b);
+            if (!x || !y) return false;
+            return x === y || x.startsWith(y) || y.startsWith(x);
+        }
+        function sameDept(a, b) {
+            const x = normKey(a), y = normKey(b);
+            if (!x || !y) return false;
+            return x === y || x.includes(y) || y.includes(x);
+        }
+
+        /* ---------- 나이스 '평가단위명' → 전형명 / 학과 분리 ----------
+           예) '지역균형전형-경제학과-수시'  → 전형: 지역균형전형 / 학과: 경제학과
+               '학생부교과(학교장추천전형) 경제학부' → 전형: 학생부교과(학교장추천전형) / 학과: 경제학부
+               'GROUP1', '1-01', '수시1' 처럼 알 수 없는 코드 → 전형칸에 그대로 넣고 학과는 비움 (학생이 채우면 돼요) */
+        const TYPE_RE = /전형|교과|종합|추천|균형|논술|면접|실기|실적|우수자|인재|일반|학생부|학종|고교|기회균등|배려|조기취업|계약|dodream|창의|모집|선발|학업|성적|group|특별|농어촌|특성화|저소득|재직자|정원외/i;
+        const JUNK_RE = /^([\d０-９\-]+명?|[a-z]\d{2,4}|\d{4}학년도|수시\d*차?|[\d０-９]+수시)$/i;
+        function splitTop(str, seps) {
+            const out = []; let depth = 0, cur = '';
+            for (const ch of str) {
+                if ('([<{（［'.includes(ch)) depth++;
+                if (')]>}）］'.includes(ch)) depth = Math.max(0, depth - 1);
+                if (depth === 0 && seps.includes(ch)) { if (cur.trim()) out.push(cur.trim()); cur = ''; }
+                else cur += ch;
+            }
+            if (cur.trim()) out.push(cur.trim());
+            return out;
+        }
+        function stripTail(p) {
+            let s = p;
+            for (let i = 0; i < 4; i++) s = s.replace(/\s*(\([^()]*\)|<[^<>]*>|\[[^\[\]]*\]|（[^（）]*）)\s*$/, '');
+            return s.replace(/[\dⅠⅡⅢ]+$/, '').trim();
+        }
+        function classifyPart(p) {
+            if (!p || JUNK_RE.test(normKey(p)) || /㈜|\(주\)|주식회사/.test(p)) return 'junk';
+            const core = stripTail(p);
+            // 예) '미래인재대학(AI신약학과)' → 괄호 안이 학과이고 앞부분이 전형이 아니면 학과로 봄
+            if (/(학과|학부|전공|계열)\)?$/.test(p.trim()) && !/전형|교과|종합|추천|균형|논술|면접|학생부|우수자|계약/.test(core)) return 'dept';
+            const isType = TYPE_RE.test(core.replace(/\s/g, ''));
+            const isDept = /(학과|학부|전공|계열|과|부|학)$/.test(core);
+            if (isType) return 'type';
+            if (isDept) return 'dept';
+            return 'other';
+        }
+        function parseUnit(raw) {
+            const original = String(raw || '').trim();
+            let s = original
+                .replace(/\d{4}학년도\s*/g, '')
+                .replace(/^\s*수시(모집)?(\s*등)?\s*[-_\s]+/, '')
+                .replace(/[-_\s]*수시(모집)?\d*차?(\([^)]*\))?\s*$/, '')
+                .trim();
+            let parts = splitTop(s, ['-', '_']);
+            // '-'로 안 나뉜 조각 중 띄어쓰기로 [전형 학과]가 붙은 경우 추가 분리
+            parts = parts.flatMap(p => {
+                if (classifyPart(p) === 'dept') return [p];
+                const sub = splitTop(p, [' ']);
+                return sub.length > 1 && sub.some(x => classifyPart(x) === 'dept') ? sub : [p];
+            });
+            const types = [], depts = [], others = [];
+            parts.forEach(p => {
+                const k = classifyPart(p);
+                if (k === 'type') types.push(p);
+                else if (k === 'dept') depts.push(p);
+                else if (k === 'other') others.push(p);
+            });
+            let type = types.join(' ');
+            let department = depts.join(' ');
+            if (!department && others.length) {
+                if (types.length) department = others.join(' ');
+                else types.push(...others);
+            }
+            type = types.join(' ');
+            if (!type && !department) type = original;
+            return { type, department };
+        }
+
+        function openImportModal() {
+            if (!globalAllData) { showToast('먼저 학생 데이터를 불러와 주세요 (새로고침)', false); return; }
+            resetImport();
+            document.getElementById('import-modal').classList.remove('hidden');
+        }
+        function closeImportModal() {
+            if (importState.running) { alert('등록이 진행 중입니다. 끝날 때까지 기다려 주세요.'); return; }
+            document.getElementById('import-modal').classList.add('hidden');
+        }
+        function resetImport() {
+            importState = { wb: null, rows: [], headerRow: 0, mapping: {}, items: [], results: [], running: false };
+            buildImportPreview._lastMap = null;
+            document.getElementById('import-file').value = '';
+            document.getElementById('import-file-msg').innerText = '';
+            document.getElementById('import-step1').classList.remove('hidden');
+            document.getElementById('import-step2').classList.add('hidden');
+            document.getElementById('import-step3').classList.add('hidden');
+            document.getElementById('import-done-actions').classList.add('hidden');
+        }
+
+        async function handleImportFile(e) {
+            const file = e.target.files[0];
+            const msg = document.getElementById('import-file-msg');
+            if (!file) return;
+            if (typeof XLSX === 'undefined') { msg.innerText = '엑셀 읽기 도구를 불러오지 못했습니다. 인터넷 연결 후 새로고침 해주세요.'; return; }
+            msg.className = 'text-xs text-center mt-3 font-semibold text-purple-600 min-h-[1rem]';
+            msg.innerText = '파일을 읽는 중...';
+            try {
+                const buf = await file.arrayBuffer();
+                let wb;
+                if (/\.csv$/i.test(file.name)) {
+                    let text;
+                    try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+                    catch (err) { text = new TextDecoder('euc-kr').decode(buf); }
+                    wb = XLSX.read(text.replace(/^\uFEFF/, ''), { type: 'string', raw: true });
+                } else {
+                    wb = XLSX.read(buf, { type: 'array' });
+                }
+                importState.wb = wb;
+                const sheetSel = document.getElementById('import-sheet-select');
+                sheetSel.innerHTML = wb.SheetNames.map((n, i) => `<option value="${i}">${escapeHtml(n)}</option>`).join('');
+                onImportSheetChange();
+                document.getElementById('import-step1').classList.add('hidden');
+                document.getElementById('import-step2').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                msg.className = 'text-xs text-center mt-3 font-semibold text-pink-600 min-h-[1rem]';
+                msg.innerText = '파일을 읽지 못했습니다. 엑셀(xlsx/xls) 또는 CSV 파일인지 확인해 주세요.';
+            }
+        }
+
+        function normHeader(v) { return String(v || '').replace(/\s+/g, '').replace(/[*※]/g, ''); }
+
+        function onImportSheetChange() {
+            const wb = importState.wb;
+            const ws = wb.Sheets[wb.SheetNames[Number(document.getElementById('import-sheet-select').value) || 0]];
+            // raw:true → 수험번호 '0362270124' 같은 앞자리 0이 사라지지 않도록 셀 값을 그대로 읽음
+            importState.rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: false })
+                .map(r => r.map(v => (v === null || v === undefined) ? '' : String(v)));
+            let best = 0, bestScore = -1;
+            importState.rows.slice(0, 20).forEach((row, i) => {
+                const hs = row.map(normHeader);
+                const score = IMPORT_FIELDS.filter(f => hs.some(h => f.match(h))).length;
+                if (score > bestScore) { bestScore = score; best = i; }
+            });
+            const hr = document.getElementById('import-header-row');
+            hr.innerHTML = importState.rows.slice(0, 20).map((row, i) => `<option value="${i}">${i + 1}번째 줄: ${escapeHtml(row.filter(Boolean).slice(0, 4).join(', ').slice(0, 40))}</option>`).join('');
+            hr.value = String(best);
+            onImportHeaderChange();
+        }
+
+        function onImportHeaderChange() {
+            importState.headerRow = Number(document.getElementById('import-header-row').value) || 0;
+            const headers = (importState.rows[importState.headerRow] || []).map(h => String(h || '').trim());
+            const used = new Set();
+            importState.mapping = {};
+            IMPORT_FIELDS.forEach(f => {
+                const idx = headers.findIndex((h, i) => !used.has(i) && f.match(normHeader(h)));
+                importState.mapping[f.key] = idx;
+                if (idx >= 0) used.add(idx);
+            });
+            const isNeis = importState.mapping.unit >= 0 && importState.mapping.university >= 0;
+            document.getElementById('import-format-badge').innerHTML = isNeis
+                ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">✅ 나이스 '제공현황진행상황(반별)' 양식으로 인식했어요</span>`
+                : `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">일반 양식 — 열을 확인해 주세요</span>`;
+            document.getElementById('import-mapping').innerHTML = IMPORT_FIELDS.map(f => `
+                <label class="text-[11px] font-bold text-purple-900">${f.label}
+                    <select data-key="${f.key}" onchange="importState.mapping[this.dataset.key]=Number(this.value); buildImportPreview();" class="mt-0.5 w-full border ${importState.mapping[f.key] >= 0 ? 'border-emerald-300 bg-emerald-50' : 'border-purple-200 bg-white'} rounded-lg px-1.5 py-1 text-[11px] font-medium">
+                        <option value="-1">(없음)</option>
+                        ${headers.map((h, i) => h ? `<option value="${i}" ${importState.mapping[f.key] === i ? 'selected' : ''}>${escapeHtml(h)}</option>` : '').join('')}
+                    </select>
+                </label>`).join('');
+            parseImportRows();
+        }
+
+        function digitsOf(v) { const m = String(v || '').match(/\d+/g); return m ? m[m.length - 1] : ''; }
+
+        function parseImportRows() {
+            buildImportPreview._lastMap = JSON.stringify(importState.mapping);
+            const m = importState.mapping;
+            const get = (row, key) => m[key] >= 0 ? String(row[m[key]] ?? '').trim() : '';
+            const items = [];
+            let skippedStatus = 0;
+            importState.rows.slice(importState.headerRow + 1).forEach(row => {
+                let id = '';
+                const rawId = get(row, 'studentId').replace(/\D/g, '');
+                if (rawId.length >= 5) id = rawId.slice(-5);
+                else {
+                    const g = digitsOf(get(row, 'grade')) || '3';
+                    const c = digitsOf(get(row, 'classNo'));
+                    const n = digitsOf(get(row, 'number'));
+                    if (g && c && n) id = `${g.slice(-1)}${c.padStart(2, '0')}${n.padStart(2, '0')}`;
+                }
+                const university = get(row, 'university');
+                if (!/^\d{5}$/.test(id) || !university) return;
+                const period = get(row, 'period');
+                const status = get(row, 'status');
+                if (period && !/수시/.test(period)) { skippedStatus++; return; }
+                if (/취소|반려|철회/.test(status)) { skippedStatus++; return; }
+
+                let department = get(row, 'department'), type = get(row, 'type');
+                const unit = get(row, 'unit');
+                if (unit && (!department || !type)) {
+                    const pu = parseUnit(unit);
+                    if (!department) department = pu.department;
+                    if (!type) type = pu.type;
+                }
+                items.push({
+                    id, name: get(row, 'name'), university, department, type, unit,
+                    examNo: get(row, 'examNo').replace(/\s/g, ''),
+                    kind: guessKind(university, get(row, 'uniKind')), include: true
+                });
+            });
+            // 중복 제거: 같은 학생·같은 대학의 같은 수험번호(재요청 줄) 또는 같은 평가단위
+            const seen = new Set();
+            importState.items = items.filter(it => {
+                const k = it.examNo ? `${it.id}|${normUni(it.university)}|#${it.examNo}`
+                                    : `${it.id}|${normUni(it.university)}|${normKey(it.unit || (it.department + it.type))}`;
+                if (seen.has(k)) return false; seen.add(k); return true;
+            });
+            importState.dupRows = items.length - importState.items.length;
+            importState.skippedStatus = skippedStatus;
+            // 특수대학(과학기술원 등)은 6회 제한 밖이므로 뒤로 보내기
+            importState.items.sort((a, b) => a.id.localeCompare(b.id, 'ko', { numeric: true }) || (isSpecialUni(a.university) - isSpecialUni(b.university)));
+
+            const cls = [...new Set(importState.items.map(it => getClassInfo(it.id).code))].sort();
+            const sel = document.getElementById('import-class-filter');
+            const prev = sel.value;
+            sel.innerHTML = `<option value="ALL">전체 (${new Set(importState.items.map(i => i.id)).size}명)</option>` +
+                cls.map(c => `<option value="${c}">${getClassInfo(c + '00').label} (${new Set(importState.items.filter(i => getClassInfo(i.id).code === c).map(i => i.id)).size}명)</option>`).join('');
+            if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+            buildImportPreview();
+        }
+
+        /* ---------- 한 학생의 카드에 지원 내역을 어떻게 넣을지 계획 (미리보기·실제 등록 공통) ----------
+           · 학생이 이미 쓴 카드는 절대 수정하지 않음
+           · 이미 같은 대학이 카드에 있으면 추가하지 않음 (학과까지 같으면 우선 짝지음)
+           · 4년제 → 1~6번 빈칸, 전문대 → 7~12번 빈칸, 칸이 모자라면 반대쪽 빈칸 사용 */
+        function planStudentCards(baseCards, apps) {
+            const cards = baseCards.map(c => ({ ...c }));
+            const existing = cards.filter(c => !isCardEmpty(c));
+            const used = new Set();
+            const plan = apps.map(a => ({ app: a, status: '', slot: null }));
+            // 1차: 대학+학과가 같은 기존 카드와 짝짓기
+            plan.forEach(p => {
+                const hit = existing.find(c => !used.has(c.id) && sameUni(c.university, p.app.university) && sameDept(c.department, p.app.department));
+                if (hit) { used.add(hit.id); p.status = 'dup'; p.slot = hit.id; }
+            });
+            // 2차: 대학만 같은 기존 카드와 짝짓기 (학생이 학과를 다르게/비워 적은 경우)
+            plan.forEach(p => {
+                if (p.status) return;
+                const hit = existing.find(c => !used.has(c.id) && sameUni(c.university, p.app.university));
+                if (hit) { used.add(hit.id); p.status = 'dup'; p.slot = hit.id; }
+            });
+            // 3차: 남은 지원 내역을 빈 카드에 채우기
+            plan.forEach(p => {
+                if (p.status) return;
+                const a = p.app;
+                const own = a.kind === '2yr' ? [7, 12] : [1, 6];
+                const other = a.kind === '2yr' ? [1, 6] : [7, 12];
+                let slot = cards.find(c => c.id >= own[0] && c.id <= own[1] && isCardEmpty(c));
+                let overflow = false;
+                if (!slot) { slot = cards.find(c => c.id >= other[0] && c.id <= other[1] && isCardEmpty(c)); overflow = !!slot; }
+                if (!slot) { p.status = 'full'; return; }
+                slot.university = a.university;
+                slot.department = a.department;
+                slot.type = a.type;
+                if (!slot.step1) slot.step1 = '미발표';
+                if (!slot.finalResult) slot.finalResult = '미발표';
+                if (!slot.examType) slot.examType = 'none';
+                p.status = overflow ? 'overflow' : 'add';
+                p.slot = slot.id;
+            });
+            return { cards, plan };
+        }
+
+        function getImportTargets() {
+            const cls = document.getElementById('import-class-filter').value;
+            return importState.items.filter(it => cls === 'ALL' || getClassInfo(it.id).code === cls);
+        }
+
+        function buildImportPreview() {
+            if (buildImportPreview._lastMap !== JSON.stringify(importState.mapping)) { parseImportRows(); return; }
+            const targets = getImportTargets();
+            const wrap = document.getElementById('import-preview');
+            if (!targets.length) {
+                wrap.innerHTML = `<div class="py-10 text-center text-xs text-red-500 font-bold">인식된 지원 내역이 없어요. 위에서 '반', '번호', '대학' 열을 확인해 주세요.</div>`;
+                document.getElementById('import-summary').innerText = '';
+                return;
+            }
+            const users = globalAllData.users || {};
+            const ids = [...new Set(targets.map(t => t.id))];
+            const newCount = ids.filter(id => !users[id]).length;
+            let addCount = 0, dupCount = 0, fullCount = 0;
+            let html = '';
+            ids.forEach(id => {
+                const apps = targets.filter(t => t.id === id);
+                const base = normalizeServerCards(getStudentCardsForAdmin(id));
+                const { plan } = planStudentCards(base, apps.filter(a => a.include));
+                const isNew = !users[id];
+                apps.forEach((it, i) => {
+                    const idx = importState.items.indexOf(it);
+                    const p = plan.find(x => x.app === it);
+                    let note = '<span class="text-gray-300">제외</span>';
+                    if (p) {
+                        if (p.status === 'add') { note = `<span class="text-emerald-700 font-bold">➕ 카드 ${p.slot}</span>`; addCount++; }
+                        if (p.status === 'overflow') { note = `<span class="text-teal-700 font-bold">➕ 카드 ${p.slot}</span><br><span class="text-[10px] text-gray-500">(칸 부족→반대편 칸)</span>`; addCount++; }
+                        if (p.status === 'dup') { note = `<span class="text-amber-700 font-bold">이미 있음 (카드 ${p.slot})</span>`; dupCount++; }
+                        if (p.status === 'full') { note = `<span class="text-red-600 font-bold">빈 카드 없음</span>`; fullCount++; }
+                    }
+                    html += `<tr class="${i === 0 ? 'student-first' : ''} ${it.include ? '' : 'opacity-40'}">
+                        <td><input type="checkbox" ${it.include ? 'checked' : ''} onchange="importState.items[${idx}].include=this.checked; buildImportPreview();"></td>
+                        <td class="font-bold">${i === 0 ? escapeHtml(id) : ''}</td>
+                        <td class="font-bold text-purple-950 whitespace-nowrap">${i === 0 ? escapeHtml(it.name) : ''}</td>
+                        <td class="whitespace-nowrap">${i === 0 ? (isNew ? '<span class="text-emerald-700 font-bold text-[10.5px]">🆕 자동가입</span>' : '<span class="text-gray-500 text-[10.5px] font-bold">가입됨</span>') : ''}</td>
+                        <td><select onchange="importState.items[${idx}].kind=this.value; buildImportPreview();" class="border rounded px-1 py-0.5 text-[11px] font-bold ${it.kind === '4yr' ? 'border-purple-300 text-purple-800' : 'border-teal-300 text-teal-800'}">
+                            <option value="4yr" ${it.kind === '4yr' ? 'selected' : ''}>4년제</option><option value="2yr" ${it.kind === '2yr' ? 'selected' : ''}>전문대</option></select></td>
+                        <td class="font-bold whitespace-nowrap">${escapeHtml(it.university)}</td>
+                        <td><input value="${escapeHtml(it.type)}" onchange="importState.items[${idx}].type=this.value.trim(); buildImportPreview();" class="border border-purple-100 rounded px-1 py-0.5 text-[11px] w-40"></td>
+                        <td><input value="${escapeHtml(it.department)}" onchange="importState.items[${idx}].department=this.value.trim(); buildImportPreview();" class="border border-purple-100 rounded px-1 py-0.5 text-[11px] w-36"></td>
+                        <td class="text-[10px] text-gray-400 max-w-[180px]">${escapeHtml(it.unit)}</td>
+                        <td class="text-[11px] whitespace-nowrap">${note}</td>
+                    </tr>`;
+                });
+            });
+            wrap.innerHTML = `<table class="admin-table"><thead><tr><th></th><th>학번</th><th>성명</th><th>계정</th><th>구분</th><th>대학</th><th>전형명 (수정 가능)</th><th>학과 (수정 가능)</th><th>나이스 원문</th><th>결과 예정</th></tr></thead><tbody>${html}</tbody></table>`;
+            const extraInfo = [];
+            if (importState.dupRows) extraInfo.push(`재요청 등 중복 ${importState.dupRows}줄 자동 제외`);
+            if (importState.skippedStatus) extraInfo.push(`수시 외/취소 ${importState.skippedStatus}줄 제외`);
+            document.getElementById('import-summary').innerText =
+                `학생 ${ids.length}명 (자동가입 ${newCount}명) · 카드 추가 ${addCount}건 · 이미 있음 ${dupCount}건` + (fullCount ? ` · 칸 부족 ${fullCount}건` : '') +
+                (extraInfo.length ? ` · ${extraInfo.join(', ')}` : '');
+        }
+
+        function makePassword(id) {
+            const rule = document.querySelector('input[name="pw-rule"]:checked').value;
+            if (rule === 'studentId') return id;
+            if (rule === 'fixed') return (document.getElementById('pw-fixed-value').value || '1111').trim();
+            // 0으로 시작하면 구글 시트가 숫자로 바꿔 앞의 0이 사라질 수 있어 1000~9999 사용
+            const arr = new Uint32Array(1); crypto.getRandomValues(arr);
+            return String(1000 + (arr[0] % 9000));
+        }
+
+        function normalizeServerCards(serverCards) {
+            // 기존 loadUserCards 와 똑같은 방식으로 정리 (학생이 쓴 값·추가 항목은 그대로 유지)
+            const byId = {};
+            (serverCards || []).forEach((c, i) => {
+                const id = Number(c.id) || (i + 1);
+                byId[id] = {
+                    ...c, id,
+                    examType: c.examType || '',
+                    interviewDate: formatDateToYYYYMMDD(c.interviewDate),
+                    practicalDate: formatDateToYYYYMMDD(c.practicalDate),
+                    docDate: formatDateToYYYYMMDD(c.docDate),
+                    passDate: formatDateToYYYYMMDD(c.passDate)
+                };
+            });
+            return Array.from({ length: 12 }, (_, i) => byId[i + 1] || blankCard(i + 1));
+        }
+
+        async function runImport() {
+            const targets = getImportTargets().filter(t => t.include);
+            if (!targets.length) { alert('등록할 지원 내역이 없어요.'); return; }
+            const users = globalAllData.users || {};
+            const ids = [...new Set(targets.map(t => t.id))];
+            const newIds = ids.filter(id => !users[id]);
+            if (document.querySelector('input[name="pw-rule"]:checked').value === 'fixed') {
+                const fv = (document.getElementById('pw-fixed-value').value || '').trim();
+                if (!fv) { alert('공통 비밀번호를 입력해 주세요.'); return; }
+                if (/^0\d*$/.test(fv)) { alert('0으로 시작하는 숫자 비밀번호는 구글 시트에서 앞의 0이 사라질 수 있어요. 다른 비밀번호를 써주세요.'); return; }
+            }
+            if (!confirm(`학생 ${ids.length}명을 등록합니다.\n· 자동 가입(아이디=학번, 비밀번호 자동생성): ${newIds.length}명\n· 이미 가입한 학생: ${ids.length - newIds.length}명 (비밀번호 유지, 빈 카드에만 추가)\n\n예상 소요 시간: 약 ${Math.max(1, Math.ceil(ids.length * 4 / 60))}분\n진행할까요?`)) return;
+
+            importState.running = true;
+            importState.results = [];
+            document.getElementById('import-step2').classList.add('hidden');
+            document.getElementById('import-step3').classList.remove('hidden');
+            document.getElementById('import-close-btn').classList.add('opacity-30');
+            window.onbeforeunload = () => '등록 중입니다';
+
+            const bar = document.getElementById('import-progress-bar');
+            const label = document.getElementById('import-progress-label');
+            const count = document.getElementById('import-progress-count');
+            const resultBox = document.getElementById('import-result');
+            const pendingPw = {};
+
+            const renderResults = () => {
+                resultBox.innerHTML = `<table class="admin-table"><thead><tr><th>학번</th><th>이름</th><th>계정</th><th>비밀번호</th><th>추가된 카드</th><th>비고</th></tr></thead><tbody>${importState.results.map(r => `
+                    <tr><td class="font-bold">${escapeHtml(r.id)}</td><td>${escapeHtml(r.name)}</td>
+                    <td class="${r.ok ? 'text-emerald-700' : 'text-red-600'} font-bold">${escapeHtml(r.status)}</td>
+                    <td class="font-mono">${escapeHtml(r.pw)}</td><td class="font-bold">${r.added}</td>
+                    <td class="text-[11px] text-gray-500">${escapeHtml(r.note)}</td></tr>`).join('')}</tbody></table>`;
+                resultBox.scrollTop = resultBox.scrollHeight;
+            };
+
+            for (let n = 0; n < ids.length; n++) {
+                const id = ids[n];
+                const apps = targets.filter(t => t.id === id);
+                const name = apps.find(a => a.name)?.name || '';
+                label.innerText = `${id} ${name} 학생 등록 중...`;
+                count.innerText = `${n} / ${ids.length}`;
+                bar.style.width = `${(n / ids.length) * 100}%`;
+
+                const r = { id, name, status: '', pw: '', added: 0, note: '', ok: true };
+                let isNew = false;
+
+                // 1) 자동 가입 (없는 학생만) — 아이디: 학번 / 비밀번호: 자동 생성
+                if (!globalAllData.users[id]) {
+                    const pw = makePassword(id);
+                    const res = await callGoogleAPIRetry({ action: 'signup', id, name, pw });
+                    if (!res) { r.status = '실패'; r.ok = false; r.note = '서버 통신 오류 (다시 시도해 주세요)'; importState.results.push(r); renderResults(); continue; }
+                    if (res.success) {
+                        isNew = true;
+                        r.status = '🆕 자동 가입'; r.pw = pw;
+                        pendingPw[id] = pw; setLocalCreatedPw(id, pw);
+                        globalAllData.users[id] = { id, name, pw };
+                    } else {
+                        r.status = '이미 가입됨'; r.note = '비밀번호는 기존 그대로';
+                    }
+                } else {
+                    r.status = '이미 가입됨'; r.pw = getStudentPw(id) || '(기존 유지)';
+                }
+
+                // 2) 서버에서 그 학생의 최신 카드를 다시 불러오기 (방금 학생이 쓴 내용까지 보호)
+                const cardRes = await callGoogleAPIRetry({ action: 'getCards', studentId: id });
+                if (!cardRes) { r.ok = false; r.note = '카드 불러오기 실패 → 카드 추가 건너뜀 (학생 데이터 보호)'; importState.results.push(r); renderResults(); continue; }
+                const hasServerCards = cardRes.success && Array.isArray(cardRes.cards) && cardRes.cards.length > 0;
+                const knownFilled = getStudentCardsForAdmin(id).some(c => !isCardEmpty(c));
+                if (!hasServerCards && !isNew && knownFilled) {
+                    r.ok = false; r.note = '서버 응답이 비어 있어 안전을 위해 건너뜀'; importState.results.push(r); renderResults(); continue;
+                }
+                const base = normalizeServerCards(hasServerCards ? cardRes.cards : []);
+
+                // 3) 빈 카드에만 채우기
+                const { cards, plan } = planStudentCards(base, apps);
+                r.added = plan.filter(p => p.status === 'add' || p.status === 'overflow').length;
+                const notes = [];
+                const dups = plan.filter(p => p.status === 'dup').length;
+                if (dups) notes.push(`이미 있음 ${dups}건`);
+                plan.filter(p => p.status === 'full').forEach(p => notes.push(`${p.app.university}(빈 카드 없음)`));
+                if (plan.some(p => p.status === 'overflow')) notes.push('칸 부족으로 반대편 칸 사용');
+                if (notes.length) r.note = (r.note ? r.note + ' / ' : '') + notes.join(', ');
+
+                // 4) 추가할 것이 있을 때만 저장
+                if (r.added > 0) {
+                    const saveRes = await callGoogleAPIRetry({ action: 'saveCards', studentId: id, cards });
+                    if (saveRes && saveRes.success) {
+                        globalAllData.cards[id] = JSON.parse(JSON.stringify(cards));
+                    } else {
+                        r.ok = false; r.note = '카드 저장 실패 (다시 시도해 주세요) ' + r.note; r.added = 0;
+                    }
+                }
+                importState.results.push(r);
+                renderResults();
+
+                if (Object.keys(pendingPw).length >= 10) {
+                    if (await savePwBook(pendingPw)) Object.keys(pendingPw).forEach(k => delete pendingPw[k]);
+                }
+            }
+
+            if (Object.keys(pendingPw).length) {
+                const ok = await savePwBook(pendingPw);
+                if (!ok) showToast('비밀번호 장부 서버 저장 실패 — 결과 엑셀을 꼭 저장해 주세요!', false);
+            }
+
+            bar.style.width = '100%';
+            count.innerText = `${ids.length} / ${ids.length}`;
+            const fail = importState.results.filter(r => !r.ok).length;
+            label.innerText = fail ? `완료! (확인 필요 ${fail}명 — 비고를 확인해 주세요)` : '🎉 모두 완료되었습니다!';
+            document.getElementById('import-progress-warn').innerText = '결과(학번·비밀번호)를 엑셀로 저장해 두시면 학생 안내에 편해요. 관리자 화면에서 안내쪽지도 인쇄할 수 있어요.';
+            document.getElementById('import-progress-warn').className = 'text-[11px] text-emerald-700 font-bold mt-2';
+            document.getElementById('import-done-actions').classList.remove('hidden');
+            document.getElementById('import-close-btn').classList.remove('opacity-30');
+            importState.running = false;
+            window.onbeforeunload = null;
+            loadAdminData();
+        }
+
+        function downloadImportResult() {
+            const rows = importState.results.map(r => [getClassInfo(r.id).label, r.id, r.name, r.status, r.pw, r.added, r.note]);
+            const ws = XLSX.utils.aoa_to_sheet([['반', '학번', '이름', '계정', '비밀번호', '추가된 카드', '비고'], ...rows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '일괄등록결과');
+            XLSX.writeFile(wb, `수시대박_일괄등록결과.xlsx`);
+        }
     </script>
 </body>
 </html>
-```eof
